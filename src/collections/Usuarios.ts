@@ -117,5 +117,12 @@ export const Usuarios: CollectionConfig = {
       ],
       defaultValue: 'User',
     },
+    {
+      name: 'fotoUsuario',
+      label: 'Foto Usuario',
+      type: 'upload',
+      relationTo: 'media',
+      required: false,
+    },
   ],
 }
