@@ -137,6 +137,7 @@ export interface Usuario {
     | null;
   numero?: number | null;
   role: 'Admin' | 'User';
+  fotoUsuario?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -234,6 +235,7 @@ export interface UsuariosSelect<T extends boolean = true> {
   pais?: T;
   numero?: T;
   role?: T;
+  fotoUsuario?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
