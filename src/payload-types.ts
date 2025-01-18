@@ -12,7 +12,6 @@ export interface Config {
   };
   collections: {
     usuarios: Usuario;
-    media: Media;
     fotosUsuarios: FotosUsuario;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -21,7 +20,6 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     usuarios: UsuariosSelect<false> | UsuariosSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
     fotosUsuarios: FotosUsuariosSelect<false> | FotosUsuariosSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -139,7 +137,6 @@ export interface Usuario {
     | null;
   numero?: number | null;
   role: 'Admin' | 'User';
-  fotoUsuario?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -150,25 +147,6 @@ export interface Usuario {
   loginAttempts?: number | null;
   lockUntil?: string | null;
   password?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -200,10 +178,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'usuarios';
         value: number | Usuario;
-      } | null)
-    | ({
-        relationTo: 'media';
-        value: number | Media;
       } | null)
     | ({
         relationTo: 'fotosUsuarios';
@@ -261,7 +235,6 @@ export interface UsuariosSelect<T extends boolean = true> {
   pais?: T;
   numero?: T;
   role?: T;
-  fotoUsuario?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -271,24 +244,6 @@ export interface UsuariosSelect<T extends boolean = true> {
   hash?: T;
   loginAttempts?: T;
   lockUntil?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
- */
-export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
