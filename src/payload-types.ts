@@ -13,6 +13,7 @@ export interface Config {
   collections: {
     usuarios: Usuario;
     media: Media;
+    fotosUsuarios: FotosUsuario;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -21,6 +22,7 @@ export interface Config {
   collectionsSelect: {
     usuarios: UsuariosSelect<false> | UsuariosSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    fotosUsuarios: FotosUsuariosSelect<false> | FotosUsuariosSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -170,6 +172,26 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fotosUsuarios".
+ */
+export interface FotosUsuario {
+  id: number;
+  SupaURL?: string | null;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -182,6 +204,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'fotosUsuarios';
+        value: number | FotosUsuario;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -252,6 +278,25 @@ export interface UsuariosSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fotosUsuarios_select".
+ */
+export interface FotosUsuariosSelect<T extends boolean = true> {
+  SupaURL?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
