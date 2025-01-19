@@ -9,6 +9,7 @@ import sharp from 'sharp'
 
 import { Usuarios } from './collections/Usuarios'
 import { FotosUsuarios } from './collections/FotosUsuarios'
+import { CapturaDePagos } from './collections/CapturasPagos'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -21,7 +22,7 @@ export default buildConfig({
     },
   },
 
-  collections: [Usuarios, FotosUsuarios],
+  collections: [Usuarios, FotosUsuarios, CapturaDePagos],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -38,6 +39,9 @@ export default buildConfig({
       collections: {
         fotosUsuarios: {
           prefix: 'fotos-usuarios',
+        },
+        'captura-de-pagos': {
+          prefix: 'pagos',
         },
       },
       bucket: process.env.S3_BUCKET as string,
