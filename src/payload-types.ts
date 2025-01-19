@@ -15,6 +15,7 @@ export interface Config {
     fotosUsuarios: FotosUsuario;
     'captura-de-pagos': CapturaDePago;
     imagenes: Imagene;
+    fotosPreguntas: FotosPregunta;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -25,6 +26,7 @@ export interface Config {
     fotosUsuarios: FotosUsuariosSelect<false> | FotosUsuariosSelect<true>;
     'captura-de-pagos': CapturaDePagosSelect<false> | CapturaDePagosSelect<true>;
     imagenes: ImagenesSelect<false> | ImagenesSelect<true>;
+    fotosPreguntas: FotosPreguntasSelect<false> | FotosPreguntasSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -222,6 +224,26 @@ export interface Imagene {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fotosPreguntas".
+ */
+export interface FotosPregunta {
+  id: number;
+  SupaURL?: string | null;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -242,6 +264,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'imagenes';
         value: number | Imagene;
+      } | null)
+    | ({
+        relationTo: 'fotosPreguntas';
+        value: number | FotosPregunta;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -349,6 +375,25 @@ export interface CapturaDePagosSelect<T extends boolean = true> {
  */
 export interface ImagenesSelect<T extends boolean = true> {
   Alt?: T;
+  SupaURL?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fotosPreguntas_select".
+ */
+export interface FotosPreguntasSelect<T extends boolean = true> {
   SupaURL?: T;
   prefix?: T;
   updatedAt?: T;

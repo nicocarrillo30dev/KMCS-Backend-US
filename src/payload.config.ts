@@ -11,6 +11,7 @@ import { Usuarios } from './collections/Usuarios'
 import { FotosUsuarios } from './collections/FotosUsuarios'
 import { CapturaDePagos } from './collections/CapturasPagos'
 import { Imagenes } from './collections/Imagenes'
+import FotosPreguntas from './collections/FotosPreguntas'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -23,7 +24,7 @@ export default buildConfig({
     },
   },
 
-  collections: [Usuarios, FotosUsuarios, CapturaDePagos, Imagenes],
+  collections: [Usuarios, FotosUsuarios, CapturaDePagos, Imagenes, FotosPreguntas],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -46,6 +47,9 @@ export default buildConfig({
         },
         'captura-de-pagos': {
           prefix: 'pagos',
+        },
+        fotosPreguntas: {
+          prefix: 'fotos-preguntas',
         },
       },
       bucket: process.env.S3_BUCKET as string,
