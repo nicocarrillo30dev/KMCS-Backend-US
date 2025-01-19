@@ -22,6 +22,8 @@ export interface Config {
     enrollment: Enrollment;
     membresias: Membresia;
     'registro-de-membresias': RegistroDeMembresia;
+    'talleres-presenciales': TalleresPresenciale;
+    'reviews-cursos-virtuales': ReviewsCursosVirtuale;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -39,6 +41,8 @@ export interface Config {
     enrollment: EnrollmentSelect<false> | EnrollmentSelect<true>;
     membresias: MembresiasSelect<false> | MembresiasSelect<true>;
     'registro-de-membresias': RegistroDeMembresiasSelect<false> | RegistroDeMembresiasSelect<true>;
+    'talleres-presenciales': TalleresPresencialesSelect<false> | TalleresPresencialesSelect<true>;
+    'reviews-cursos-virtuales': ReviewsCursosVirtualesSelect<false> | ReviewsCursosVirtualesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -439,6 +443,104 @@ export interface RegistroDeMembresia {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "talleres-presenciales".
+ */
+export interface TalleresPresenciale {
+  id: number;
+  title: string;
+  /**
+   * El "slug" es el identificador de cada curso. Ej: https://kathymonzon.com/cursos/👉[pasteles-vintage]👈 (El slug se crea sólo en base al nombre del curso, no hay escribir nada en el campo. Pero si se comete un error, se puede modificar después de crear el curso)
+   */
+  slug?: string | null;
+  estado?: ('publico' | 'oculto') | null;
+  /**
+   * Añade una descripción general del curso. Este texto aparecerá encima de la lista de recetas en la página del curso.
+   */
+  descripcionCurso?: string | null;
+  /**
+   * Añade las recetas o técnicas asociadas con este curso. Ejemplo: "Cupcakes de fresa", "Uso correcto del batido".
+   */
+  contenido?:
+    | {
+        nombre: string;
+        /**
+         * Añade una breve descripción de la técnica o receta.
+         */
+        descripcion?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Lista los beneficios que ofrece este curso.
+   */
+  beneficios?:
+    | {
+        descripcionBeneficio: string;
+        id?: string | null;
+      }[]
+    | null;
+  precio: number;
+  /**
+   * Añade grupos de fechas. Cada grupo puede tener múltiples fechas.
+   */
+  gruposDeFechas?:
+    | {
+        nombreGrupo: string;
+        /**
+         * Número total de vacantes disponibles para este grupo.
+         */
+        vacantes: number;
+        /**
+         * Especifica el horario del grupo (Ejemplo: 3 PM - 7 PM).
+         */
+        horario: string;
+        fechas?:
+          | {
+              fechaClase: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  nivel?: ('principiante' | 'intermedio' | 'avanzado') | null;
+  diasExpiracion?: number | null;
+  preguntasYRespuestas?: boolean | null;
+  /**
+   * La imagen de portada de los talleres presenciales es en formato rectangular (4:5). Son las imágenes que aparecen cuando ingresas a https://kathymonzon.com/talleres-presenciales
+   */
+  coverImage?: (number | null) | Imagene;
+  /**
+   * Las imágenes adicionales son las que aparecen dentro de cada curso y el tamaño sugerido es de (4:5). Lo ideal es colocar un número de imágenes impar, Ej. 3, 5, 7; para no dejar espacios en blanco en la página del curso
+   */
+  imagenesAdicionales?:
+    | {
+        imagen?: (number | null) | Imagene;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews-cursos-virtuales".
+ */
+export interface ReviewsCursosVirtuale {
+  id: number;
+  usuario: number | Usuario;
+  curso: number | Curso;
+  nombreUsuario: string;
+  paisUsuario?: string | null;
+  estrellas: number;
+  reseña: string;
+  fecha: string;
+  estado: 'aceptada' | 'denegada';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -487,6 +589,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'registro-de-membresias';
         value: number | RegistroDeMembresia;
+      } | null)
+    | ({
+        relationTo: 'talleres-presenciales';
+        value: number | TalleresPresenciale;
+      } | null)
+    | ({
+        relationTo: 'reviews-cursos-virtuales';
+        value: number | ReviewsCursosVirtuale;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -747,6 +857,72 @@ export interface RegistroDeMembresiasSelect<T extends boolean = true> {
   tipoDeMembresia?: T;
   estado?: T;
   fechaDeExpiracion?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "talleres-presenciales_select".
+ */
+export interface TalleresPresencialesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  estado?: T;
+  descripcionCurso?: T;
+  contenido?:
+    | T
+    | {
+        nombre?: T;
+        descripcion?: T;
+        id?: T;
+      };
+  beneficios?:
+    | T
+    | {
+        descripcionBeneficio?: T;
+        id?: T;
+      };
+  precio?: T;
+  gruposDeFechas?:
+    | T
+    | {
+        nombreGrupo?: T;
+        vacantes?: T;
+        horario?: T;
+        fechas?:
+          | T
+          | {
+              fechaClase?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  nivel?: T;
+  diasExpiracion?: T;
+  preguntasYRespuestas?: T;
+  coverImage?: T;
+  imagenesAdicionales?:
+    | T
+    | {
+        imagen?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews-cursos-virtuales_select".
+ */
+export interface ReviewsCursosVirtualesSelect<T extends boolean = true> {
+  usuario?: T;
+  curso?: T;
+  nombreUsuario?: T;
+  paisUsuario?: T;
+  estrellas?: T;
+  reseña?: T;
+  fecha?: T;
+  estado?: T;
   updatedAt?: T;
   createdAt?: T;
 }
