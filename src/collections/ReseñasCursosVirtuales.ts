@@ -90,7 +90,7 @@ const ReviewsCursosVirtuales: CollectionConfig = {
         },
       ],
       required: true,
-      defaultValue: 'denegada', // Valor predeterminado
+      defaultValue: 'denegada',
       admin: {
         position: 'sidebar',
       },
@@ -98,9 +98,8 @@ const ReviewsCursosVirtuales: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      async ({ data, originalDoc, operation, req }) => {
+      async ({ data, operation, req }) => {
         if (operation === 'create' && data.usuario) {
-          // Obtener el usuario relacionado
           const usuario = await req.payload.findByID({
             collection: 'usuarios',
             id: data.usuario,
@@ -108,7 +107,7 @@ const ReviewsCursosVirtuales: CollectionConfig = {
 
           if (usuario) {
             data.nombreUsuario = `${usuario.nombre} ${usuario.apellidos}`
-            data.paisUsuario = usuario.pais // Agregar país del usuario
+            data.paisUsuario = usuario.pais
           }
         }
       },

@@ -24,6 +24,8 @@ export interface Config {
     'registro-de-membresias': RegistroDeMembresia;
     'talleres-presenciales': TalleresPresenciale;
     'reviews-cursos-virtuales': ReviewsCursosVirtuale;
+    preguntasRespuestas: PreguntasRespuesta;
+    pedidos: Pedido;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -43,6 +45,8 @@ export interface Config {
     'registro-de-membresias': RegistroDeMembresiasSelect<false> | RegistroDeMembresiasSelect<true>;
     'talleres-presenciales': TalleresPresencialesSelect<false> | TalleresPresencialesSelect<true>;
     'reviews-cursos-virtuales': ReviewsCursosVirtualesSelect<false> | ReviewsCursosVirtualesSelect<true>;
+    preguntasRespuestas: PreguntasRespuestasSelect<false> | PreguntasRespuestasSelect<true>;
+    pedidos: PedidosSelect<false> | PedidosSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -541,6 +545,99 @@ export interface ReviewsCursosVirtuale {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "preguntasRespuestas".
+ */
+export interface PreguntasRespuesta {
+  id: number;
+  usuario: number | Usuario;
+  nombreDelUsuario?: string | null;
+  curso: number | Curso;
+  mensajes?:
+    | {
+        tipo: 'texto' | 'imagen';
+        contenido?: string | null;
+        imagen?: (number | null) | FotosPregunta;
+        enviadoPor: 'usuario' | 'profesora';
+        id?: string | null;
+      }[]
+    | null;
+  estado?: ('En proceso' | 'Resuelta') | null;
+  fechaPregunta?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pedidos".
+ */
+export interface Pedido {
+  id: number;
+  /**
+   * Un ID o código interno para identificar este pedido.
+   */
+  pedidoID: string;
+  date: string;
+  state: 'pendiente' | 'completado' | 'cancelado';
+  client?: (number | null) | Usuario;
+  nombre?: string | null;
+  apellidos?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  /**
+   * Ej: "Yape", "Plin", "Transferencia", "Tarjeta", etc.
+   */
+  payment?: string | null;
+  capturaPago?: (number | null) | CapturaDePago;
+  activeCoupon?: (number | null) | Cupone;
+  cursos?:
+    | {
+        cursoRef: number | Curso;
+        price?: number | null;
+        customTotalPrice?: number | null;
+        discountApplied?: number | null;
+        /**
+         * Precio final después de aplicar descuentos y/o edición manual
+         */
+        finalPrice?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  talleresPresenciales?:
+    | {
+        tallerRef: number | TalleresPresenciale;
+        price?: number | null;
+        customTotalPrice?: number | null;
+        discountApplied?: number | null;
+        /**
+         * Precio final después de aplicar descuentos y/o edición manual
+         */
+        finalPrice?: number | null;
+        schedule?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  membresias?:
+    | {
+        membresiaRef: number | Membresia;
+        price?: number | null;
+        customTotalPrice?: number | null;
+        discountApplied?: number | null;
+        /**
+         * Precio final después de aplicar descuentos y/o edición manual
+         */
+        finalPrice?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Suma de todos los productos finales, con descuentos aplicados.
+   */
+  totalPrice?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -597,6 +694,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'reviews-cursos-virtuales';
         value: number | ReviewsCursosVirtuale;
+      } | null)
+    | ({
+        relationTo: 'preguntasRespuestas';
+        value: number | PreguntasRespuesta;
+      } | null)
+    | ({
+        relationTo: 'pedidos';
+        value: number | Pedido;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -923,6 +1028,79 @@ export interface ReviewsCursosVirtualesSelect<T extends boolean = true> {
   reseña?: T;
   fecha?: T;
   estado?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "preguntasRespuestas_select".
+ */
+export interface PreguntasRespuestasSelect<T extends boolean = true> {
+  usuario?: T;
+  nombreDelUsuario?: T;
+  curso?: T;
+  mensajes?:
+    | T
+    | {
+        tipo?: T;
+        contenido?: T;
+        imagen?: T;
+        enviadoPor?: T;
+        id?: T;
+      };
+  estado?: T;
+  fechaPregunta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pedidos_select".
+ */
+export interface PedidosSelect<T extends boolean = true> {
+  pedidoID?: T;
+  date?: T;
+  state?: T;
+  client?: T;
+  nombre?: T;
+  apellidos?: T;
+  country?: T;
+  phone?: T;
+  payment?: T;
+  capturaPago?: T;
+  activeCoupon?: T;
+  cursos?:
+    | T
+    | {
+        cursoRef?: T;
+        price?: T;
+        customTotalPrice?: T;
+        discountApplied?: T;
+        finalPrice?: T;
+        id?: T;
+      };
+  talleresPresenciales?:
+    | T
+    | {
+        tallerRef?: T;
+        price?: T;
+        customTotalPrice?: T;
+        discountApplied?: T;
+        finalPrice?: T;
+        schedule?: T;
+        id?: T;
+      };
+  membresias?:
+    | T
+    | {
+        membresiaRef?: T;
+        price?: T;
+        customTotalPrice?: T;
+        discountApplied?: T;
+        finalPrice?: T;
+        id?: T;
+      };
+  totalPrice?: T;
   updatedAt?: T;
   createdAt?: T;
 }

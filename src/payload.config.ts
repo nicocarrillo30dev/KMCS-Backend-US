@@ -20,6 +20,8 @@ import { Membresias } from './collections/Membership'
 import { RegistroDeMembresias } from './collections/RegistroMembresia'
 import { TalleresPresenciales } from './collections/TalleresPresenciales'
 import ReviewsCursosVirtuales from './collections/ReseñasCursosVirtuales'
+import PreguntasRespuestas from './collections/PreguntasAlumnos'
+import { pedidos } from './collections/Orders'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -46,6 +48,8 @@ export default buildConfig({
     RegistroDeMembresias,
     TalleresPresenciales,
     ReviewsCursosVirtuales,
+    PreguntasRespuestas,
+    pedidos,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
