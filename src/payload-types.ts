@@ -11,42 +11,42 @@ export interface Config {
     usuarios: UsuarioAuthOperations;
   };
   collections: {
-    usuarios: Usuario;
-    fotosUsuarios: FotosUsuario;
     'captura-de-pagos': CapturaDePago;
-    imagenes: Imagene;
-    fotosPreguntas: FotosPregunta;
     categorias: Categoria;
     cursos: Curso;
     cupones: Cupone;
     enrollment: Enrollment;
+    fotosPreguntas: FotosPregunta;
+    fotosUsuarios: FotosUsuario;
+    imagenes: Imagene;
     membresias: Membresia;
-    'registro-de-membresias': RegistroDeMembresia;
-    'talleres-presenciales': TalleresPresenciale;
-    'reviews-cursos-virtuales': ReviewsCursosVirtuale;
-    preguntasRespuestas: PreguntasRespuesta;
     pedidos: Pedido;
+    preguntasRespuestas: PreguntasRespuesta;
+    'registro-de-membresias': RegistroDeMembresia;
+    'reviews-cursos-virtuales': ReviewsCursosVirtuale;
+    'talleres-presenciales': TalleresPresenciale;
+    usuarios: Usuario;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {};
   collectionsSelect: {
-    usuarios: UsuariosSelect<false> | UsuariosSelect<true>;
-    fotosUsuarios: FotosUsuariosSelect<false> | FotosUsuariosSelect<true>;
     'captura-de-pagos': CapturaDePagosSelect<false> | CapturaDePagosSelect<true>;
-    imagenes: ImagenesSelect<false> | ImagenesSelect<true>;
-    fotosPreguntas: FotosPreguntasSelect<false> | FotosPreguntasSelect<true>;
     categorias: CategoriasSelect<false> | CategoriasSelect<true>;
     cursos: CursosSelect<false> | CursosSelect<true>;
     cupones: CuponesSelect<false> | CuponesSelect<true>;
     enrollment: EnrollmentSelect<false> | EnrollmentSelect<true>;
+    fotosPreguntas: FotosPreguntasSelect<false> | FotosPreguntasSelect<true>;
+    fotosUsuarios: FotosUsuariosSelect<false> | FotosUsuariosSelect<true>;
+    imagenes: ImagenesSelect<false> | ImagenesSelect<true>;
     membresias: MembresiasSelect<false> | MembresiasSelect<true>;
-    'registro-de-membresias': RegistroDeMembresiasSelect<false> | RegistroDeMembresiasSelect<true>;
-    'talleres-presenciales': TalleresPresencialesSelect<false> | TalleresPresencialesSelect<true>;
-    'reviews-cursos-virtuales': ReviewsCursosVirtualesSelect<false> | ReviewsCursosVirtualesSelect<true>;
-    preguntasRespuestas: PreguntasRespuestasSelect<false> | PreguntasRespuestasSelect<true>;
     pedidos: PedidosSelect<false> | PedidosSelect<true>;
+    preguntasRespuestas: PreguntasRespuestasSelect<false> | PreguntasRespuestasSelect<true>;
+    'registro-de-membresias': RegistroDeMembresiasSelect<false> | RegistroDeMembresiasSelect<true>;
+    'reviews-cursos-virtuales': ReviewsCursosVirtualesSelect<false> | ReviewsCursosVirtualesSelect<true>;
+    'talleres-presenciales': TalleresPresencialesSelect<false> | TalleresPresencialesSelect<true>;
+    usuarios: UsuariosSelect<false> | UsuariosSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -85,168 +85,9 @@ export interface UsuarioAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "usuarios".
- */
-export interface Usuario {
-  id: number;
-  nombre: string;
-  apellidos?: string | null;
-  pais?:
-    | (
-        | 'andorra'
-        | 'argentina'
-        | 'australia'
-        | 'austria'
-        | 'bahamas'
-        | 'belgica'
-        | 'bolivia'
-        | 'brasil'
-        | 'canada'
-        | 'chile'
-        | 'china'
-        | 'colombia'
-        | 'costa_rica'
-        | 'croacia'
-        | 'cuba'
-        | 'chipre'
-        | 'republica_checa'
-        | 'dinamarca'
-        | 'dominica'
-        | 'republica_dominicana'
-        | 'ecuador'
-        | 'egipto'
-        | 'el_salvador'
-        | 'espana'
-        | 'estados_unidos'
-        | 'estonia'
-        | 'finlandia'
-        | 'francia'
-        | 'georgia'
-        | 'alemania'
-        | 'grecia'
-        | 'granada'
-        | 'guatemala'
-        | 'honduras'
-        | 'islandia'
-        | 'irlanda'
-        | 'italia'
-        | 'jamaica'
-        | 'japon'
-        | 'corea_del_sur'
-        | 'mexico'
-        | 'monaco'
-        | 'paises_bajos'
-        | 'nueva_zelanda'
-        | 'nicaragua'
-        | 'noruega'
-        | 'panama'
-        | 'paraguay'
-        | 'peru'
-        | 'polonia'
-        | 'portugal'
-        | 'rusia'
-        | 'san_marino'
-        | 'serbia'
-        | 'singapur'
-        | 'eslovaquia'
-        | 'eslovenia'
-        | 'suecia'
-        | 'suiza'
-        | 'trinidad_y_tobago'
-        | 'turquia'
-        | 'ucrania'
-        | 'reino_unido'
-        | 'uruguay'
-        | 'ciudad_del_vaticano'
-        | 'venezuela'
-      )
-    | null;
-  numero?: number | null;
-  role: 'Admin' | 'User';
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  password?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fotosUsuarios".
- */
-export interface FotosUsuario {
-  id: number;
-  SupaURL?: string | null;
-  prefix?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "captura-de-pagos".
  */
 export interface CapturaDePago {
-  id: number;
-  SupaURL?: string | null;
-  prefix?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "imagenes".
- */
-export interface Imagene {
-  id: number;
-  /**
-   *
-   *           Describe la imagen de manera clara y precisa para mejorar el SEO, la accesibilidad y destacar la marca Kathy Monzón Cake Studio.
-   *           Por ejemplo, si la imagen es de una torta de chocolate, escribe:
-   *           "Curso Virtual "Torta de Chocolate"- Torta de chocolate decorada con fresas - Kathy Monzón Cake Studio".
-   *
-   */
-  Alt?: string | null;
-  SupaURL?: string | null;
-  prefix?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fotosPreguntas".
- */
-export interface FotosPregunta {
   id: number;
   SupaURL?: string | null;
   prefix?: string | null;
@@ -370,6 +211,34 @@ export interface Curso {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "imagenes".
+ */
+export interface Imagene {
+  id: number;
+  /**
+   *
+   *           Describe la imagen de manera clara y precisa para mejorar el SEO, la accesibilidad y destacar la marca Kathy Monzón Cake Studio.
+   *           Por ejemplo, si la imagen es de una torta de chocolate, escribe:
+   *           "Curso Virtual "Torta de Chocolate"- Torta de chocolate decorada con fresas - Kathy Monzón Cake Studio".
+   *
+   */
+  Alt?: string | null;
+  SupaURL?: string | null;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "cupones".
  */
 export interface Cupone {
@@ -420,6 +289,137 @@ export interface Enrollment {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "usuarios".
+ */
+export interface Usuario {
+  id: number;
+  nombre: string;
+  apellidos?: string | null;
+  pais?:
+    | (
+        | 'andorra'
+        | 'argentina'
+        | 'australia'
+        | 'austria'
+        | 'bahamas'
+        | 'belgica'
+        | 'bolivia'
+        | 'brasil'
+        | 'canada'
+        | 'chile'
+        | 'china'
+        | 'colombia'
+        | 'costa_rica'
+        | 'croacia'
+        | 'cuba'
+        | 'chipre'
+        | 'republica_checa'
+        | 'dinamarca'
+        | 'dominica'
+        | 'republica_dominicana'
+        | 'ecuador'
+        | 'egipto'
+        | 'el_salvador'
+        | 'espana'
+        | 'estados_unidos'
+        | 'estonia'
+        | 'finlandia'
+        | 'francia'
+        | 'georgia'
+        | 'alemania'
+        | 'grecia'
+        | 'granada'
+        | 'guatemala'
+        | 'honduras'
+        | 'islandia'
+        | 'irlanda'
+        | 'italia'
+        | 'jamaica'
+        | 'japon'
+        | 'corea_del_sur'
+        | 'mexico'
+        | 'monaco'
+        | 'paises_bajos'
+        | 'nueva_zelanda'
+        | 'nicaragua'
+        | 'noruega'
+        | 'panama'
+        | 'paraguay'
+        | 'peru'
+        | 'polonia'
+        | 'portugal'
+        | 'rusia'
+        | 'san_marino'
+        | 'serbia'
+        | 'singapur'
+        | 'eslovaquia'
+        | 'eslovenia'
+        | 'suecia'
+        | 'suiza'
+        | 'trinidad_y_tobago'
+        | 'turquia'
+        | 'ucrania'
+        | 'reino_unido'
+        | 'uruguay'
+        | 'ciudad_del_vaticano'
+        | 'venezuela'
+      )
+    | null;
+  numero?: number | null;
+  role: 'Admin' | 'User';
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fotosPreguntas".
+ */
+export interface FotosPregunta {
+  id: number;
+  SupaURL?: string | null;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fotosUsuarios".
+ */
+export interface FotosUsuario {
+  id: number;
+  SupaURL?: string | null;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "membresias".
  */
 export interface Membresia {
@@ -434,14 +434,71 @@ export interface Membresia {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "registro-de-membresias".
+ * via the `definition` "pedidos".
  */
-export interface RegistroDeMembresia {
+export interface Pedido {
   id: number;
-  usuario: number | Usuario;
-  tipoDeMembresia: number | Membresia;
-  estado: 'activo' | 'inactivo';
-  fechaDeExpiracion: string;
+  /**
+   * Un ID o código interno para identificar este pedido.
+   */
+  pedidoID: string;
+  date: string;
+  state: 'pendiente' | 'completado' | 'cancelado';
+  client?: (number | null) | Usuario;
+  nombre?: string | null;
+  apellidos?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  /**
+   * Ej: "Yape", "Plin", "Transferencia", "Tarjeta", etc.
+   */
+  payment?: string | null;
+  capturaPago?: (number | null) | CapturaDePago;
+  activeCoupon?: (number | null) | Cupone;
+  cursos?:
+    | {
+        cursoRef: number | Curso;
+        price?: number | null;
+        customTotalPrice?: number | null;
+        discountApplied?: number | null;
+        /**
+         * Precio final después de aplicar descuentos y/o edición manual
+         */
+        finalPrice?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  talleresPresenciales?:
+    | {
+        tallerRef: number | TalleresPresenciale;
+        price?: number | null;
+        customTotalPrice?: number | null;
+        discountApplied?: number | null;
+        /**
+         * Precio final después de aplicar descuentos y/o edición manual
+         */
+        finalPrice?: number | null;
+        schedule?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  membresias?:
+    | {
+        membresiaRef: number | Membresia;
+        price?: number | null;
+        customTotalPrice?: number | null;
+        discountApplied?: number | null;
+        /**
+         * Precio final después de aplicar descuentos y/o edición manual
+         */
+        finalPrice?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Suma de todos los productos finales, con descuentos aplicados.
+   */
+  totalPrice?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -528,23 +585,6 @@ export interface TalleresPresenciale {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reviews-cursos-virtuales".
- */
-export interface ReviewsCursosVirtuale {
-  id: number;
-  usuario: number | Usuario;
-  curso: number | Curso;
-  nombreUsuario: string;
-  paisUsuario?: string | null;
-  estrellas: number;
-  reseña: string;
-  fecha: string;
-  estado: 'aceptada' | 'denegada';
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "preguntasRespuestas".
  */
 export interface PreguntasRespuesta {
@@ -568,71 +608,31 @@ export interface PreguntasRespuesta {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pedidos".
+ * via the `definition` "registro-de-membresias".
  */
-export interface Pedido {
+export interface RegistroDeMembresia {
   id: number;
-  /**
-   * Un ID o código interno para identificar este pedido.
-   */
-  pedidoID: string;
-  date: string;
-  state: 'pendiente' | 'completado' | 'cancelado';
-  client?: (number | null) | Usuario;
-  nombre?: string | null;
-  apellidos?: string | null;
-  country?: string | null;
-  phone?: string | null;
-  /**
-   * Ej: "Yape", "Plin", "Transferencia", "Tarjeta", etc.
-   */
-  payment?: string | null;
-  capturaPago?: (number | null) | CapturaDePago;
-  activeCoupon?: (number | null) | Cupone;
-  cursos?:
-    | {
-        cursoRef: number | Curso;
-        price?: number | null;
-        customTotalPrice?: number | null;
-        discountApplied?: number | null;
-        /**
-         * Precio final después de aplicar descuentos y/o edición manual
-         */
-        finalPrice?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  talleresPresenciales?:
-    | {
-        tallerRef: number | TalleresPresenciale;
-        price?: number | null;
-        customTotalPrice?: number | null;
-        discountApplied?: number | null;
-        /**
-         * Precio final después de aplicar descuentos y/o edición manual
-         */
-        finalPrice?: number | null;
-        schedule?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  membresias?:
-    | {
-        membresiaRef: number | Membresia;
-        price?: number | null;
-        customTotalPrice?: number | null;
-        discountApplied?: number | null;
-        /**
-         * Precio final después de aplicar descuentos y/o edición manual
-         */
-        finalPrice?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Suma de todos los productos finales, con descuentos aplicados.
-   */
-  totalPrice?: number | null;
+  usuario: number | Usuario;
+  tipoDeMembresia: number | Membresia;
+  estado: 'activo' | 'inactivo';
+  fechaDeExpiracion: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews-cursos-virtuales".
+ */
+export interface ReviewsCursosVirtuale {
+  id: number;
+  usuario: number | Usuario;
+  curso: number | Curso;
+  nombreUsuario: string;
+  paisUsuario?: string | null;
+  estrellas: number;
+  reseña: string;
+  fecha: string;
+  estado: 'aceptada' | 'denegada';
   updatedAt: string;
   createdAt: string;
 }
@@ -644,24 +644,8 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'usuarios';
-        value: number | Usuario;
-      } | null)
-    | ({
-        relationTo: 'fotosUsuarios';
-        value: number | FotosUsuario;
-      } | null)
-    | ({
         relationTo: 'captura-de-pagos';
         value: number | CapturaDePago;
-      } | null)
-    | ({
-        relationTo: 'imagenes';
-        value: number | Imagene;
-      } | null)
-    | ({
-        relationTo: 'fotosPreguntas';
-        value: number | FotosPregunta;
       } | null)
     | ({
         relationTo: 'categorias';
@@ -680,28 +664,44 @@ export interface PayloadLockedDocument {
         value: number | Enrollment;
       } | null)
     | ({
+        relationTo: 'fotosPreguntas';
+        value: number | FotosPregunta;
+      } | null)
+    | ({
+        relationTo: 'fotosUsuarios';
+        value: number | FotosUsuario;
+      } | null)
+    | ({
+        relationTo: 'imagenes';
+        value: number | Imagene;
+      } | null)
+    | ({
         relationTo: 'membresias';
         value: number | Membresia;
       } | null)
     | ({
-        relationTo: 'registro-de-membresias';
-        value: number | RegistroDeMembresia;
-      } | null)
-    | ({
-        relationTo: 'talleres-presenciales';
-        value: number | TalleresPresenciale;
-      } | null)
-    | ({
-        relationTo: 'reviews-cursos-virtuales';
-        value: number | ReviewsCursosVirtuale;
+        relationTo: 'pedidos';
+        value: number | Pedido;
       } | null)
     | ({
         relationTo: 'preguntasRespuestas';
         value: number | PreguntasRespuesta;
       } | null)
     | ({
-        relationTo: 'pedidos';
-        value: number | Pedido;
+        relationTo: 'registro-de-membresias';
+        value: number | RegistroDeMembresia;
+      } | null)
+    | ({
+        relationTo: 'reviews-cursos-virtuales';
+        value: number | ReviewsCursosVirtuale;
+      } | null)
+    | ({
+        relationTo: 'talleres-presenciales';
+        value: number | TalleresPresenciale;
+      } | null)
+    | ({
+        relationTo: 'usuarios';
+        value: number | Usuario;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -747,87 +747,9 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "usuarios_select".
- */
-export interface UsuariosSelect<T extends boolean = true> {
-  nombre?: T;
-  apellidos?: T;
-  pais?: T;
-  numero?: T;
-  role?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fotosUsuarios_select".
- */
-export interface FotosUsuariosSelect<T extends boolean = true> {
-  SupaURL?: T;
-  prefix?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "captura-de-pagos_select".
  */
 export interface CapturaDePagosSelect<T extends boolean = true> {
-  SupaURL?: T;
-  prefix?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "imagenes_select".
- */
-export interface ImagenesSelect<T extends boolean = true> {
-  Alt?: T;
-  SupaURL?: T;
-  prefix?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fotosPreguntas_select".
- */
-export interface FotosPreguntasSelect<T extends boolean = true> {
   SupaURL?: T;
   prefix?: T;
   updatedAt?: T;
@@ -942,6 +864,64 @@ export interface EnrollmentSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fotosPreguntas_select".
+ */
+export interface FotosPreguntasSelect<T extends boolean = true> {
+  SupaURL?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fotosUsuarios_select".
+ */
+export interface FotosUsuariosSelect<T extends boolean = true> {
+  SupaURL?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "imagenes_select".
+ */
+export interface ImagenesSelect<T extends boolean = true> {
+  Alt?: T;
+  SupaURL?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "membresias_select".
  */
 export interface MembresiasSelect<T extends boolean = true> {
@@ -955,6 +935,79 @@ export interface MembresiasSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pedidos_select".
+ */
+export interface PedidosSelect<T extends boolean = true> {
+  pedidoID?: T;
+  date?: T;
+  state?: T;
+  client?: T;
+  nombre?: T;
+  apellidos?: T;
+  country?: T;
+  phone?: T;
+  payment?: T;
+  capturaPago?: T;
+  activeCoupon?: T;
+  cursos?:
+    | T
+    | {
+        cursoRef?: T;
+        price?: T;
+        customTotalPrice?: T;
+        discountApplied?: T;
+        finalPrice?: T;
+        id?: T;
+      };
+  talleresPresenciales?:
+    | T
+    | {
+        tallerRef?: T;
+        price?: T;
+        customTotalPrice?: T;
+        discountApplied?: T;
+        finalPrice?: T;
+        schedule?: T;
+        id?: T;
+      };
+  membresias?:
+    | T
+    | {
+        membresiaRef?: T;
+        price?: T;
+        customTotalPrice?: T;
+        discountApplied?: T;
+        finalPrice?: T;
+        id?: T;
+      };
+  totalPrice?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "preguntasRespuestas_select".
+ */
+export interface PreguntasRespuestasSelect<T extends boolean = true> {
+  usuario?: T;
+  nombreDelUsuario?: T;
+  curso?: T;
+  mensajes?:
+    | T
+    | {
+        tipo?: T;
+        contenido?: T;
+        imagen?: T;
+        enviadoPor?: T;
+        id?: T;
+      };
+  estado?: T;
+  fechaPregunta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "registro-de-membresias_select".
  */
 export interface RegistroDeMembresiasSelect<T extends boolean = true> {
@@ -962,6 +1015,22 @@ export interface RegistroDeMembresiasSelect<T extends boolean = true> {
   tipoDeMembresia?: T;
   estado?: T;
   fechaDeExpiracion?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews-cursos-virtuales_select".
+ */
+export interface ReviewsCursosVirtualesSelect<T extends boolean = true> {
+  usuario?: T;
+  curso?: T;
+  nombreUsuario?: T;
+  paisUsuario?: T;
+  estrellas?: T;
+  reseña?: T;
+  fecha?: T;
+  estado?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1017,92 +1086,23 @@ export interface TalleresPresencialesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reviews-cursos-virtuales_select".
+ * via the `definition` "usuarios_select".
  */
-export interface ReviewsCursosVirtualesSelect<T extends boolean = true> {
-  usuario?: T;
-  curso?: T;
-  nombreUsuario?: T;
-  paisUsuario?: T;
-  estrellas?: T;
-  reseña?: T;
-  fecha?: T;
-  estado?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "preguntasRespuestas_select".
- */
-export interface PreguntasRespuestasSelect<T extends boolean = true> {
-  usuario?: T;
-  nombreDelUsuario?: T;
-  curso?: T;
-  mensajes?:
-    | T
-    | {
-        tipo?: T;
-        contenido?: T;
-        imagen?: T;
-        enviadoPor?: T;
-        id?: T;
-      };
-  estado?: T;
-  fechaPregunta?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pedidos_select".
- */
-export interface PedidosSelect<T extends boolean = true> {
-  pedidoID?: T;
-  date?: T;
-  state?: T;
-  client?: T;
+export interface UsuariosSelect<T extends boolean = true> {
   nombre?: T;
   apellidos?: T;
-  country?: T;
-  phone?: T;
-  payment?: T;
-  capturaPago?: T;
-  activeCoupon?: T;
-  cursos?:
-    | T
-    | {
-        cursoRef?: T;
-        price?: T;
-        customTotalPrice?: T;
-        discountApplied?: T;
-        finalPrice?: T;
-        id?: T;
-      };
-  talleresPresenciales?:
-    | T
-    | {
-        tallerRef?: T;
-        price?: T;
-        customTotalPrice?: T;
-        discountApplied?: T;
-        finalPrice?: T;
-        schedule?: T;
-        id?: T;
-      };
-  membresias?:
-    | T
-    | {
-        membresiaRef?: T;
-        price?: T;
-        customTotalPrice?: T;
-        discountApplied?: T;
-        finalPrice?: T;
-        id?: T;
-      };
-  totalPrice?: T;
+  pais?: T;
+  numero?: T;
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

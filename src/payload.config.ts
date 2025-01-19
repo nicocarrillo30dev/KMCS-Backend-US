@@ -7,21 +7,21 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
-import { Usuarios } from './collections/Usuarios'
-import { FotosUsuarios } from './collections/FotosUsuarios'
 import { CapturaDePagos } from './collections/CapturasPagos'
-import { Imagenes } from './collections/Imagenes'
-import { FotosPreguntas } from './collections/FotosPreguntas'
 import { Categorias } from './collections/Categorias'
 import { Cursos } from './collections/Cursos'
 import { Cupones } from './collections/Cupones'
 import { Enrollment } from './collections/Enrollment'
+import { FotosPreguntas } from './collections/FotosPreguntas'
+import { FotosUsuarios } from './collections/FotosUsuarios'
+import { Imagenes } from './collections/Imagenes'
 import { Membresias } from './collections/Membership'
-import { RegistroDeMembresias } from './collections/RegistroMembresia'
-import { TalleresPresenciales } from './collections/TalleresPresenciales'
-import ReviewsCursosVirtuales from './collections/ReseñasCursosVirtuales'
-import PreguntasRespuestas from './collections/PreguntasAlumnos'
 import { pedidos } from './collections/Orders'
+import PreguntasRespuestas from './collections/PreguntasAlumnos'
+import { RegistroDeMembresias } from './collections/RegistroMembresia'
+import ReviewsCursosVirtuales from './collections/ReseñasCursosVirtuales'
+import { TalleresPresenciales } from './collections/TalleresPresenciales'
+import { Usuarios } from './collections/Usuarios'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -35,21 +35,21 @@ export default buildConfig({
   },
 
   collections: [
-    Usuarios,
-    FotosUsuarios,
     CapturaDePagos,
-    Imagenes,
-    FotosPreguntas,
     Categorias,
     Cursos,
     Cupones,
     Enrollment,
+    FotosPreguntas,
+    FotosUsuarios,
+    Imagenes,
     Membresias,
-    RegistroDeMembresias,
-    TalleresPresenciales,
-    ReviewsCursosVirtuales,
-    PreguntasRespuestas,
     pedidos,
+    PreguntasRespuestas,
+    RegistroDeMembresias,
+    ReviewsCursosVirtuales,
+    TalleresPresenciales,
+    Usuarios,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
