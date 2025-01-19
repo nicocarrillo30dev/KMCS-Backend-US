@@ -18,6 +18,7 @@ export interface Config {
     fotosPreguntas: FotosPregunta;
     categorias: Categoria;
     cursos: Curso;
+    cupones: Cupone;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -31,6 +32,7 @@ export interface Config {
     fotosPreguntas: FotosPreguntasSelect<false> | FotosPreguntasSelect<true>;
     categorias: CategoriasSelect<false> | CategoriasSelect<true>;
     cursos: CursosSelect<false> | CursosSelect<true>;
+    cupones: CuponesSelect<false> | CuponesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -354,6 +356,43 @@ export interface Curso {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cupones".
+ */
+export interface Cupone {
+  id: number;
+  code: string;
+  type?: ('percentage' | 'fixed') | null;
+  amount: number;
+  /**
+   * Dejar vacío si no expira
+   */
+  expirationDate?: string | null;
+  restrictions?: boolean | null;
+  /**
+   * Si es "per-course", descuenta en cada producto permitido. Si es "per-cart", descuenta del total del carrito.
+   */
+  applyMode: 'per-course' | 'per-cart';
+  /**
+   * Elija los cursos a los que aplica el cupón. Vacío por defecto para que no tenga efecto.
+   */
+  products?: (number | Curso)[] | null;
+  /**
+   * Elija los cursos a los que NO aplica el cupón. Vacío por defecto para que no tenga efecto.
+   */
+  excludeProducts?: (number | Curso)[] | null;
+  /**
+   * Elija las categorías a las que aplica el cupón. Vacío por defecto para que no tenga efecto.
+   */
+  categories?: (number | Categoria)[] | null;
+  /**
+   * Elija las categorías a las que NO aplica el cupón. Vacío por defecto para que no tenga efecto.
+   */
+  excludeCategories?: (number | Categoria)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -386,6 +425,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'cursos';
         value: number | Curso;
+      } | null)
+    | ({
+        relationTo: 'cupones';
+        value: number | Cupone;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -591,6 +634,24 @@ export interface CursosSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cupones_select".
+ */
+export interface CuponesSelect<T extends boolean = true> {
+  code?: T;
+  type?: T;
+  amount?: T;
+  expirationDate?: T;
+  restrictions?: T;
+  applyMode?: T;
+  products?: T;
+  excludeProducts?: T;
+  categories?: T;
+  excludeCategories?: T;
   updatedAt?: T;
   createdAt?: T;
 }
