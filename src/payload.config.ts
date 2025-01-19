@@ -15,6 +15,9 @@ import { FotosPreguntas } from './collections/FotosPreguntas'
 import { Categorias } from './collections/Categorias'
 import { Cursos } from './collections/Cursos'
 import { Cupones } from './collections/Cupones'
+import { Enrollment } from './collections/Enrollment'
+import { Membresias } from './collections/Membership'
+import { RegistroDeMembresias } from './collections/RegistroMembresia'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -36,6 +39,9 @@ export default buildConfig({
     Categorias,
     Cursos,
     Cupones,
+    Enrollment,
+    Membresias,
+    RegistroDeMembresias,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

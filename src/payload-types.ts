@@ -19,6 +19,9 @@ export interface Config {
     categorias: Categoria;
     cursos: Curso;
     cupones: Cupone;
+    enrollment: Enrollment;
+    membresias: Membresia;
+    'registro-de-membresias': RegistroDeMembresia;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -33,6 +36,9 @@ export interface Config {
     categorias: CategoriasSelect<false> | CategoriasSelect<true>;
     cursos: CursosSelect<false> | CursosSelect<true>;
     cupones: CuponesSelect<false> | CuponesSelect<true>;
+    enrollment: EnrollmentSelect<false> | EnrollmentSelect<true>;
+    membresias: MembresiasSelect<false> | MembresiasSelect<true>;
+    'registro-de-membresias': RegistroDeMembresiasSelect<false> | RegistroDeMembresiasSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -393,6 +399,46 @@ export interface Cupone {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollment".
+ */
+export interface Enrollment {
+  id: number;
+  usuario: number | Usuario;
+  cursos: (number | Curso)[];
+  status: 'activo' | 'inactivo';
+  fechaDeExpiracion: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "membresias".
+ */
+export interface Membresia {
+  id: number;
+  nombre: string;
+  Precio: number;
+  Cantidad: number;
+  Descuento: number;
+  duracion: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "registro-de-membresias".
+ */
+export interface RegistroDeMembresia {
+  id: number;
+  usuario: number | Usuario;
+  tipoDeMembresia: number | Membresia;
+  estado: 'activo' | 'inactivo';
+  fechaDeExpiracion: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -429,6 +475,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'cupones';
         value: number | Cupone;
+      } | null)
+    | ({
+        relationTo: 'enrollment';
+        value: number | Enrollment;
+      } | null)
+    | ({
+        relationTo: 'membresias';
+        value: number | Membresia;
+      } | null)
+    | ({
+        relationTo: 'registro-de-membresias';
+        value: number | RegistroDeMembresia;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -652,6 +710,43 @@ export interface CuponesSelect<T extends boolean = true> {
   excludeProducts?: T;
   categories?: T;
   excludeCategories?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollment_select".
+ */
+export interface EnrollmentSelect<T extends boolean = true> {
+  usuario?: T;
+  cursos?: T;
+  status?: T;
+  fechaDeExpiracion?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "membresias_select".
+ */
+export interface MembresiasSelect<T extends boolean = true> {
+  nombre?: T;
+  Precio?: T;
+  Cantidad?: T;
+  Descuento?: T;
+  duracion?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "registro-de-membresias_select".
+ */
+export interface RegistroDeMembresiasSelect<T extends boolean = true> {
+  usuario?: T;
+  tipoDeMembresia?: T;
+  estado?: T;
+  fechaDeExpiracion?: T;
   updatedAt?: T;
   createdAt?: T;
 }
