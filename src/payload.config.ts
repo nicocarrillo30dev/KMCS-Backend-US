@@ -11,7 +11,9 @@ import { Usuarios } from './collections/Usuarios'
 import { FotosUsuarios } from './collections/FotosUsuarios'
 import { CapturaDePagos } from './collections/CapturasPagos'
 import { Imagenes } from './collections/Imagenes'
-import FotosPreguntas from './collections/FotosPreguntas'
+import { FotosPreguntas } from './collections/FotosPreguntas'
+import { Categorias } from './collections/Categorias'
+import { Cursos } from './collections/Cursos'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -24,7 +26,15 @@ export default buildConfig({
     },
   },
 
-  collections: [Usuarios, FotosUsuarios, CapturaDePagos, Imagenes, FotosPreguntas],
+  collections: [
+    Usuarios,
+    FotosUsuarios,
+    CapturaDePagos,
+    Imagenes,
+    FotosPreguntas,
+    Categorias,
+    Cursos,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

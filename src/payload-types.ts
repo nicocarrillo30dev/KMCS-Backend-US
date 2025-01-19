@@ -16,6 +16,8 @@ export interface Config {
     'captura-de-pagos': CapturaDePago;
     imagenes: Imagene;
     fotosPreguntas: FotosPregunta;
+    categorias: Categoria;
+    cursos: Curso;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -27,6 +29,8 @@ export interface Config {
     'captura-de-pagos': CapturaDePagosSelect<false> | CapturaDePagosSelect<true>;
     imagenes: ImagenesSelect<false> | ImagenesSelect<true>;
     fotosPreguntas: FotosPreguntasSelect<false> | FotosPreguntasSelect<true>;
+    categorias: CategoriasSelect<false> | CategoriasSelect<true>;
+    cursos: CursosSelect<false> | CursosSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -244,6 +248,112 @@ export interface FotosPregunta {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categorias".
+ */
+export interface Categoria {
+  id: number;
+  name: string;
+  slug: string;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cursos".
+ */
+export interface Curso {
+  id: number;
+  title: string;
+  /**
+   * El "slug" es el identificador de cada curso. Ej: https://kathymonzon.com/cursos/👉[pasteles-vintage]👈 (El slug se crea sólo en base al nombre del curso, no hay escribir nada en el campo. Pero si se comete un error, se puede modificar después de crear el curso)
+   */
+  slug?: string | null;
+  estado?: ('publico' | 'oculto') | null;
+  categorias?: (number | Categoria)[] | null;
+  cantidadDePostres?: string | null;
+  /**
+   * Añade una descripción general del curso. Este texto aparecerá encima de la lista de recetas en la página del curso.
+   */
+  descripcionCurso?: string | null;
+  /**
+   * Añade las recetas únicas asociadas con este curso. Ejemplo: "Cupcakes de fresa", "Cheesecake clásico de Nueva York".
+   */
+  recetas?:
+    | {
+        nombreReceta: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Lista los beneficios que ofrece este curso.
+   */
+  beneficios?:
+    | {
+        descripcionBeneficio?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  precio: number;
+  precioConDescuento?: number | null;
+  /**
+   * La hora de finalización será siempre a las 11:59 PM. Por ejemplo, si seleccionas el 15/12/2024, la promoción terminará ese mismo día a las 11:59 PM.
+   */
+  fechaMaximaDescuento?: string | null;
+  nivel?: ('principiante' | 'intermedio' | 'avanzado') | null;
+  diasExpiracion?: number | null;
+  preguntasYRespuestas?: boolean | null;
+  /**
+   * La imagen de portada de los cursos virtuales es en formato rectangular (16:9). Son las imágenes que aparecen cuando ingresas a https://kathymonzon.com/cursos-virtuales
+   */
+  coverImage?: (number | null) | Imagene;
+  /**
+   * Las imágenes adicionales son las que aparecen dentro de cada curso y el tamaño sugerido es de 4:5. Lo ideal es colocar un número de imágenes impar, Ej. 3, 5, 7; para no dejar espacios en blanco en la página del curso
+   */
+  imagenesAdicionales?:
+    | {
+        imagen?: (number | null) | Imagene;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Rellenar este campo cuando sea un curso en pre venta y haya una fecha y hora específica para habilitar el curso. De lo contrario, no es necesario.
+   */
+  fechaHabilitacionCurso?: string | null;
+  /**
+   * Un módulo es como una carpeta que agrupa las lecciones relacionadas con un tema específico dentro del curso. Por ejemplo, el módulo "Torta Corazón" incluye todas las lecciones necesarias para aprender a preparar esta receta.
+   */
+  Modulos?:
+    | {
+        nombreLeccion?: string | null;
+        /**
+         * Si aplica, coloca el link de Vimeo en el campo, sino coloca el archivo del curso. Ej. La receta. (NO SE PUEDE COLOCAR LINK Y RECETA EN UNA MISMA LECCIÓN, SINO CAUSARÁ ERROR)
+         */
+        leccion?:
+          | {
+              namelesson?: string | null;
+              /**
+               * Este campo se rellena automáticamente basado en el nombre de la lección.
+               */
+              slug?: string | null;
+              contenidoUrl?: string | null;
+              contenidoArchivo?: (number | null) | Imagene;
+              /**
+               * Este campo se rellena de forma automática, no tocar.
+               */
+              duration?: string | null;
+              miniaturaUrl?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -268,6 +378,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'fotosPreguntas';
         value: number | FotosPregunta;
+      } | null)
+    | ({
+        relationTo: 'categorias';
+        value: number | Categoria;
+      } | null)
+    | ({
+        relationTo: 'cursos';
+        value: number | Curso;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -407,6 +525,74 @@ export interface FotosPreguntasSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categorias_select".
+ */
+export interface CategoriasSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cursos_select".
+ */
+export interface CursosSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  estado?: T;
+  categorias?: T;
+  cantidadDePostres?: T;
+  descripcionCurso?: T;
+  recetas?:
+    | T
+    | {
+        nombreReceta?: T;
+        id?: T;
+      };
+  beneficios?:
+    | T
+    | {
+        descripcionBeneficio?: T;
+        id?: T;
+      };
+  precio?: T;
+  precioConDescuento?: T;
+  fechaMaximaDescuento?: T;
+  nivel?: T;
+  diasExpiracion?: T;
+  preguntasYRespuestas?: T;
+  coverImage?: T;
+  imagenesAdicionales?:
+    | T
+    | {
+        imagen?: T;
+        id?: T;
+      };
+  fechaHabilitacionCurso?: T;
+  Modulos?:
+    | T
+    | {
+        nombreLeccion?: T;
+        leccion?:
+          | T
+          | {
+              namelesson?: T;
+              slug?: T;
+              contenidoUrl?: T;
+              contenidoArchivo?: T;
+              duration?: T;
+              miniaturaUrl?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
