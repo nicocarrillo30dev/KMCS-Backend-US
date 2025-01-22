@@ -35,6 +35,8 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
+  serverURL: 'https://kmcs-backend-us-production.up.railway.app',
+  csrf: ['https://www.nicolascarrillo.com'],
   endpoints: [
     {
       path: '/courses',
