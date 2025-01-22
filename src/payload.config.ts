@@ -37,6 +37,10 @@ export default buildConfig({
   },
   serverURL: 'https://kmcs-backend-us-production.up.railway.app',
   csrf: ['https://www.nicolascarrillo.com'],
+  cors: {
+    origins: ['https://www.nicolascarrillo.com'],
+    headers: ['Content-Type', 'Authorization'],
+  },
   endpoints: [
     {
       path: '/courses',
