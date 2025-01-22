@@ -7,6 +7,8 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
+import { withCors } from './utils/withCors'
+
 import { CapturaDePagos } from './collections/CapturasPagos'
 import { Categorias } from './collections/Categorias'
 import { Cursos } from './collections/Cursos'
@@ -33,6 +35,45 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
+  endpoints: [
+    {
+      path: '/courses',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          const result = await req.payload.find({
+            collection: 'cursos',
+            pagination: false,
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              estado: true,
+              categorias: true,
+              precio: true,
+              precioConDescuento: true,
+              coverImage: true,
+            },
+          })
+
+          const transformedDocs = result.docs.map((course: any) => {
+            if (course.coverImage && typeof course.coverImage === 'object') {
+              return {
+                ...course,
+                coverImage: course.coverImage.SupaURL || null,
+              }
+            }
+            return course
+          })
+
+          return Response.json(transformedDocs, { status: 200 })
+        } catch (error) {
+          console.error('Error en /courses:', error)
+          return Response.json({ error: 'Error al obtener cursos' }, { status: 500 })
+        }
+      }),
+    },
+  ],
 
   collections: [
     CapturaDePagos,

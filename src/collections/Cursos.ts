@@ -176,15 +176,15 @@ export const Cursos: CollectionConfig = {
               defaultValue: [
                 {
                   descripcionBeneficio:
-                    'Videos demostrativos para todas las etapas de la preparación de los postres',
+                    'Técnicas de horneado para obtener resultados parejos, sin inconvenientes de por medio',
                 },
                 {
-                  descripcionBeneficio: 'Acceso a todas las clases y contenido durante 12 meses',
+                  descripcionBeneficio: 'Técnicas de preparación',
                 },
                 {
-                  descripcionBeneficio: 'Demos en video y fotos de todos los postres',
+                  descripcionBeneficio: 'Tips de presentación, decoración y conservación',
                 },
-              ], // Beneficios predeterminados para todos los cursos
+              ],
             },
           ],
         },
