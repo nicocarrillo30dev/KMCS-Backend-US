@@ -64,7 +64,7 @@ export default buildConfig({
             },
           })
 
-          const transformedDocs = result.docs.map((course: any) => {
+          const transformedDocs = result.docs.map((course) => {
             if (course.coverImage && typeof course.coverImage === 'object') {
               return {
                 ...course,
@@ -74,7 +74,9 @@ export default buildConfig({
             return course
           })
 
-          return Response.json(transformedDocs, { status: 200 })
+          const filteredDocs = transformedDocs.filter((course) => course.estado !== 'oculto')
+
+          return Response.json(filteredDocs, { status: 200 })
         } catch (error) {
           console.error('Error en /courses:', error)
           return Response.json({ error: 'Error al obtener cursos' }, { status: 500 })
