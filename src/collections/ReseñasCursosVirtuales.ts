@@ -112,6 +112,57 @@ const ReviewsCursosVirtuales: CollectionConfig = {
         }
       },
     ],
+    // === Agregamos afterChange para crear/editar reseña ===
+    afterChange: [
+      ({ doc, req }) => {
+        const cursoId = doc.curso
+
+        // Use setImmediate to run the API call after the current event loop
+        setImmediate(async () => {
+          try {
+            const response = await fetch(
+              `http://localhost:3000/api/average-reviews?cursoId=${cursoId}`,
+            )
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`)
+            }
+            const result = await response.json()
+            console.log('API response after change:', result)
+          } catch (error) {
+            console.error('Error fetching average-reviews API:', error)
+          }
+        })
+
+        // Return immediately to prevent blocking
+        return doc
+      },
+    ],
+    afterDelete: [
+      ({ doc }) => {
+        const cursoId = doc.curso
+
+        if (!cursoId) {
+          console.error('No cursoId found in deleted document')
+          return
+        }
+
+        // Use setImmediate like in afterChange to prevent blocking
+        setImmediate(async () => {
+          try {
+            const response = await fetch(
+              `http://localhost:3000/api/average-reviews?cursoId=${cursoId}`,
+            )
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`)
+            }
+            const result = await response.json()
+            console.log('API response after delete:', result)
+          } catch (error) {
+            console.error('Error fetching average-reviews API:', error)
+          }
+        })
+      },
+    ],
   },
 }
 
