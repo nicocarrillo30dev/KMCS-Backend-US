@@ -99,7 +99,6 @@ export default buildConfig({
             },
           })
 
-          // Primero transformamos los objetos coverImage
           const transformedDocs = result.docs.map((course) => {
             if (course.coverImage && typeof course.coverImage === 'object') {
               return {
