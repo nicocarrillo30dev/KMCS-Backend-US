@@ -121,7 +121,7 @@ const ReviewsCursosVirtuales: CollectionConfig = {
         setImmediate(async () => {
           try {
             const response = await fetch(
-              `http://localhost:3000/api/average-reviews?cursoId=${cursoId}`,
+              `https://kmcs-backend-us-production.up.railway.app/api/average-reviews?cursoId=${cursoId}`,
             )
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`)
@@ -150,7 +150,7 @@ const ReviewsCursosVirtuales: CollectionConfig = {
         setImmediate(async () => {
           try {
             const response = await fetch(
-              `http://localhost:3000/api/average-reviews?cursoId=${cursoId}`,
+              `https://kmcs-backend-us-production.up.railway.app/api/average-reviews?cursoId=${cursoId}`,
             )
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`)
