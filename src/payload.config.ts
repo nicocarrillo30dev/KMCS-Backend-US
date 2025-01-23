@@ -98,6 +98,7 @@ export default buildConfig({
               precio: true,
               precioConDescuento: true,
               coverImage: true,
+              promedioreviews: true,
             },
           })
 
@@ -155,7 +156,7 @@ export default buildConfig({
           }
 
           // Suponemos que la calificación está en "estrellas"
-          const sum = docs.reduce((acc: number, review: any) => {
+          const sum = docs.reduce((acc: number, review: { estrellas?: number }) => {
             return acc + (review.estrellas || 0)
           }, 0)
           const averageRating = sum / docs.length
