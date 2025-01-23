@@ -19,7 +19,7 @@ app.use(
 app.use(express.json())
 
 // Ruta POST para manejar el formulario de contacto
-app.post('/api/contact', async (req, res) => {
+app.post('/hola/contact', async (req, res) => {
   const { name, email, subject, message } = req.body
 
   // Validar los campos
