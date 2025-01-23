@@ -188,7 +188,7 @@ export const Cursos: CollectionConfig = {
             },
             {
               name: 'promedioreviews',
-              type: 'text',
+              type: 'number',
               label: 'Promedio Reviews',
               required: false,
             },

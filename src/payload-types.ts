@@ -151,7 +151,7 @@ export interface Curso {
         id?: string | null;
       }[]
     | null;
-  promedioreviews?: string | null;
+  promedioreviews?: number | null;
   precio: number;
   precioConDescuento?: number | null;
   /**
