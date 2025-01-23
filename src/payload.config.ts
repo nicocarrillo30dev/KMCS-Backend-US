@@ -79,48 +79,6 @@ export default buildConfig({
         }
       }),
     },
-    {
-      path: '/courseshome',
-      method: 'get',
-      handler: withCors(async (req) => {
-        try {
-          const result = await req.payload.find({
-            collection: 'cursos',
-            pagination: false,
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-              estado: true,
-              categorias: true,
-              precio: true,
-              precioConDescuento: true,
-              coverImage: true,
-            },
-          })
-
-          const transformedDocs = result.docs.map((course) => {
-            if (course.coverImage && typeof course.coverImage === 'object') {
-              return {
-                ...course,
-                coverImage: course.coverImage.SupaURL || null,
-              }
-            }
-            return course
-          })
-
-          const filteredDocs = transformedDocs.filter((course) => course.estado !== 'oculto')
-
-          // Tomamos solamente los primeros 3 cursos
-          const limitedDocs = filteredDocs.slice(0, 3)
-
-          return Response.json(limitedDocs, { status: 200 })
-        } catch (error) {
-          console.error('Error en /courses:', error)
-          return Response.json({ error: 'Error al obtener cursos' }, { status: 500 })
-        }
-      }),
-    },
   ],
 
   collections: [
