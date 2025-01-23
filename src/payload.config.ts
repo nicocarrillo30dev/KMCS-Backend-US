@@ -35,8 +35,8 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  //serverURL: 'https://kmcs-backend-us-production.up.railway.app',
-  serverURL: 'http://localhost:3000',
+  serverURL: 'https://kmcs-backend-us-production.up.railway.app',
+  //serverURL: 'http://localhost:3000',
   csrf: ['https://www.nicolascarrillo.com', 'http://localhost:3000'],
   cors: {
     origins: ['https://www.nicolascarrillo.com', 'http://localhost:3000'],
