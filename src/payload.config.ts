@@ -143,7 +143,7 @@ export default buildConfig({
           }
 
           // 2. Obtenemos las reseñas asociadas a ese curso
-          const reviewsUrl = `http://localhost:3000/api/reviews-cursos-virtuales?depth=0&where[curso][equals]=${cursoId}`
+          const reviewsUrl = `https://kmcs-backend-us-production.up.railway.app/api/reviews-cursos-virtuales?depth=0&where[curso][equals]=${cursoId}`
           const response = await fetch(reviewsUrl)
           if (!response.ok) {
             throw new Error(`Error al obtener reseñas: ${response.statusText}`)
@@ -166,15 +166,18 @@ export default buildConfig({
           // 4. Hacemos PATCH a /api/cursos/[cursoId] para actualizar "promedioreviews"
           //    Esto llama a la API REST de Payload en la ruta "Update by ID"
           //    (Si tu colección tiene auth, quizá necesites Authorization header)
-          const patchResponse = await fetch(`http://localhost:3000/api/cursos/${cursoId}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
+          const patchResponse = await fetch(
+            `https://kmcs-backend-us-production.up.railway.app/api/cursos/${cursoId}`,
+            {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                promedioreviews: averageRating, // Campo que queremos actualizar
+              }),
             },
-            body: JSON.stringify({
-              promedioreviews: averageRating, // Campo que queremos actualizar
-            }),
-          })
+          )
 
           if (!patchResponse.ok) {
             throw new Error(`Error al actualizar curso: ${patchResponse.statusText}`)
