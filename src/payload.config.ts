@@ -109,7 +109,6 @@ export default buildConfig({
             return course
           })
 
-          // Filtramos para omitir los cursos con estado "oculto"
           const filteredDocs = transformedDocs.filter((course) => course.estado !== 'oculto')
 
           // Tomamos solamente los primeros 3 cursos
