@@ -36,9 +36,10 @@ export default buildConfig({
     },
   },
   serverURL: 'https://kmcs-backend-us-production.up.railway.app',
-  csrf: ['https://www.nicolascarrillo.com'],
+  //serverURL: 'http://localhost:3000',
+  csrf: ['https://www.nicolascarrillo.com', 'http://localhost:3000'],
   cors: {
-    origins: ['https://www.nicolascarrillo.com'],
+    origins: ['https://www.nicolascarrillo.com', 'http://localhost:3000'],
     headers: ['Content-Type', 'Authorization'],
   },
   endpoints: [
@@ -59,6 +60,7 @@ export default buildConfig({
               precio: true,
               precioConDescuento: true,
               coverImage: true,
+              promedioreviews: true,
             },
           })
 
@@ -120,6 +122,78 @@ export default buildConfig({
         } catch (error) {
           console.error('Error en /courses:', error)
           return Response.json({ error: 'Error al obtener cursos' }, { status: 500 })
+        }
+      }),
+    },
+    {
+      path: '/average-reviews',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          // 1. Obtenemos el cursoId de la query
+          const urlString = (req.url ?? 'http://localhost') as string
+          const url = new URL(urlString, 'http://localhost')
+          const cursoId = url.searchParams.get('cursoId')
+
+          if (!cursoId) {
+            return Response.json({ error: 'Falta el parámetro "cursoId"' }, { status: 400 })
+          }
+
+          // 2. Obtenemos las reseñas asociadas a ese curso
+          const reviewsUrl = `http://localhost:3000/api/reviews-cursos-virtuales?depth=0&where[curso][equals]=${cursoId}`
+          const response = await fetch(reviewsUrl)
+          if (!response.ok) {
+            throw new Error(`Error al obtener reseñas: ${response.statusText}`)
+          }
+          const data = await response.json()
+          const { docs = [] } = data
+
+          // 3. Calculamos el promedio
+          if (docs.length === 0) {
+            // Sin reseñas => promedio = 0
+            return Response.json({ averageRating: 0, totalReviews: 0 }, { status: 200 })
+          }
+
+          // Suponemos que la calificación está en "estrellas"
+          const sum = docs.reduce((acc: number, review: any) => {
+            return acc + (review.estrellas || 0)
+          }, 0)
+          const averageRating = sum / docs.length
+
+          // 4. Hacemos PATCH a /api/cursos/[cursoId] para actualizar "promedioreviews"
+          //    Esto llama a la API REST de Payload en la ruta "Update by ID"
+          //    (Si tu colección tiene auth, quizá necesites Authorization header)
+          const patchResponse = await fetch(`http://localhost:3000/api/cursos/${cursoId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              promedioreviews: averageRating, // Campo que queremos actualizar
+            }),
+          })
+
+          if (!patchResponse.ok) {
+            throw new Error(`Error al actualizar curso: ${patchResponse.statusText}`)
+          }
+
+          // (Opcional) Puedes leer la respuesta del PATCH si deseas
+          // const updatedCurso = await patchResponse.json()
+
+          // 5. Retornamos el promedio y la cantidad de reseñas
+          return Response.json(
+            {
+              averageRating,
+              totalReviews: docs.length,
+            },
+            { status: 200 },
+          )
+        } catch (error) {
+          console.error('Error en /average-reviews:', error)
+          return Response.json(
+            { error: 'Error al obtener/actualizar promedio de reseñas' },
+            { status: 500 },
+          )
         }
       }),
     },

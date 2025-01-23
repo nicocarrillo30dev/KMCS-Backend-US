@@ -19,7 +19,6 @@ interface Lesson {
   [key: string]: any
 }
 
-// Define el tipo de datos para el curso
 interface CourseData {
   leccion?: Lesson[]
   [key: string]: any
@@ -154,6 +153,7 @@ export const Cursos: CollectionConfig = {
                 },
               ],
             },
+
             {
               name: 'beneficios',
               type: 'array',
@@ -185,6 +185,12 @@ export const Cursos: CollectionConfig = {
                   descripcionBeneficio: 'Tips de presentación, decoración y conservación',
                 },
               ],
+            },
+            {
+              name: 'promedioreviews',
+              type: 'text',
+              label: 'Promedio Reviews',
+              required: false,
             },
           ],
         },

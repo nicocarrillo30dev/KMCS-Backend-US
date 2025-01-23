@@ -151,6 +151,7 @@ export interface Curso {
         id?: string | null;
       }[]
     | null;
+  promedioreviews?: string | null;
   precio: number;
   precioConDescuento?: number | null;
   /**
@@ -798,6 +799,7 @@ export interface CursosSelect<T extends boolean = true> {
         descripcionBeneficio?: T;
         id?: T;
       };
+  promedioreviews?: T;
   precio?: T;
   precioConDescuento?: T;
   fechaMaximaDescuento?: T;

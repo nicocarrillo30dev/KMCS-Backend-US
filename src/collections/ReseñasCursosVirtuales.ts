@@ -41,15 +41,15 @@ const ReviewsCursosVirtuales: CollectionConfig = {
       type: 'text',
       required: true,
       admin: {
-        readOnly: true, // Solo lectura para evitar que se edite manualmente
+        readOnly: true,
       },
     },
     {
       name: 'paisUsuario',
       type: 'text',
-      required: false, // Este campo es opcional porque se llena automáticamente
+      required: false,
       admin: {
-        readOnly: true, // Solo lectura
+        readOnly: true,
       },
     },
     {
