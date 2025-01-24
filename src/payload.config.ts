@@ -38,7 +38,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  serverURL: 'https://kmcs-backend-us-production.up.railway.app',
+  serverURL: 'https://admin.nicolascarrillo.com',
   //serverURL: 'http://localhost:3000',
   csrf: ['https://www.nicolascarrillo.com'],
   cors: {
@@ -146,7 +146,7 @@ export default buildConfig({
           }
 
           // 2. Obtenemos las reseñas asociadas a ese curso
-          const reviewsUrl = `https://kmcs-backend-us-production.up.railway.app/api/reviews-cursos-virtuales?depth=0&where[curso][equals]=${cursoId}`
+          const reviewsUrl = `https://admin.nicolascarrillo.com/api/reviews-cursos-virtuales?depth=0&where[curso][equals]=${cursoId}`
           const response = await fetch(reviewsUrl)
           if (!response.ok) {
             throw new Error(`Error al obtener reseñas: ${response.statusText}`)
@@ -170,7 +170,7 @@ export default buildConfig({
           //    Esto llama a la API REST de Payload en la ruta "Update by ID"
           //    (Si tu colección tiene auth, quizá necesites Authorization header)
           const patchResponse = await fetch(
-            `https://kmcs-backend-us-production.up.railway.app/api/cursos/${cursoId}`,
+            `https://admin.nicolascarrillo.com/api/cursos/${cursoId}`,
             {
               method: 'PATCH',
               headers: {
