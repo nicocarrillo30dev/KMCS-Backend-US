@@ -26,6 +26,8 @@ import ReviewsCursosVirtuales from './collections/ReseñasCursosVirtuales'
 import { TalleresPresenciales } from './collections/TalleresPresenciales'
 import { Usuarios } from './collections/Usuarios'
 
+const ephemeralCartsStore: Record<string, any> = {}
+
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
@@ -208,7 +210,6 @@ export default buildConfig({
       path: '/validate-cart',
       method: 'post',
       handler: withCors(async (req) => {
-        // Se añade withCors aquí
         try {
           await addDataAndFileToRequest(req) // -> req.data
           const { productIds, userIdentifier } = req.data as any
@@ -220,15 +221,17 @@ export default buildConfig({
             return Response.json({ error: 'No se enviaron IDs de productos' }, { status: 400 })
           }
 
-          // Ejemplo: fetch a otro endpoint tuyo
+          // 1. Obtener cursos
           const resCursos = await fetch(`${req.payload.config.serverURL}/api/courses`)
           if (!resCursos.ok) {
             return Response.json({ error: 'Error interno fetch cursos' }, { status: 500 })
           }
           const cursosData = await resCursos.json()
-          const courses = cursosData.docs || []
 
-          // Armar validatedCart (similar a tu código)
+          // OJO: si tu /api/courses devuelve un array directo (no {docs: []}), ajusta esto
+          const courses = cursosData.docs || cursosData
+
+          // 2. Armar validatedCart
           const validatedCart = productIds
             .map((id: string) => {
               const course = courses.find((c: any) => c.id === id)
@@ -241,9 +244,51 @@ export default buildConfig({
             })
             .filter(Boolean)
 
-          return Response.json({ success: true, validatedCart }, { status: 200 }) // Añadido status 200
+          // 3. Generar cartId y guardar en memoria
+          // (en producción, usa un paquete como 'uuid' o 'crypto.randomUUID')
+          const cartId = Math.random().toString(36).substring(2, 12)
+          ephemeralCartsStore[cartId] = validatedCart
+
+          // 4. Devolver respuesta con Set-Cookie
+          //    Asegúrate de incluir SameSite, Secure, etc. según tu caso
+          return new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              // Guarda cartId como cookie, HttpOnly para que no lo lea JS fácilmente
+              'Set-Cookie': `cartId=${cartId}; Path=/; HttpOnly; Secure; SameSite=None;`,
+            },
+          })
         } catch (error: any) {
           console.error('Error en /validate-cart:', error)
+          return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
+        }
+      }),
+    },
+    {
+      path: '/checkout-data',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          // 1. Obtener la cabecera "Cookie" (Payload CMS la provee en req.headers).
+          const cookieHeader = req.headers.get('cookie') || ''
+
+          // 2. Extraer cartId usando una expresión regular simple
+          const match = cookieHeader.match(/cartId=([^;]+)/)
+          if (!match) {
+            return Response.json({ validatedCart: [] }, { status: 200 })
+          }
+          const cartId = match[1]
+
+          // 3. Recuperar el carrito almacenado en memoria
+          const validatedCart = ephemeralCartsStore[cartId] || []
+
+          // (Opcional) Si quieres protegerlo con un "userIdentifier" o algo más, hazlo aquí.
+
+          // 4. Devolver el carrito
+          return Response.json({ validatedCart }, { status: 200 })
+        } catch (error) {
+          console.error('Error en /checkout-data:', error)
           return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
         }
       }),
