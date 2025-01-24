@@ -38,9 +38,9 @@ export default buildConfig({
   },
   serverURL: 'https://kmcs-backend-us-production.up.railway.app',
   //serverURL: 'http://localhost:3000',
-  csrf: ['https://www.nicolascarrillo.com', 'http://localhost:3000'],
+  csrf: ['https://www.nicolascarrillo.com'],
   cors: {
-    origins: ['https://www.nicolascarrillo.com', 'http://localhost:3000'],
+    origins: ['https://www.nicolascarrillo.com'],
     headers: ['Content-Type', 'Authorization'],
   },
   endpoints: [
