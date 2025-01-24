@@ -211,7 +211,7 @@ export default buildConfig({
       method: 'post',
       handler: withCors(async (req) => {
         try {
-          await addDataAndFileToRequest(req) // -> req.data
+          await addDataAndFileToRequest(req)
           const { productIds, userIdentifier } = req.data as any
 
           if (!userIdentifier) {
@@ -221,47 +221,54 @@ export default buildConfig({
             return Response.json({ error: 'No se enviaron IDs de productos' }, { status: 400 })
           }
 
-          // 1. Obtener cursos
+          // 1. Obtener los cursos
           const resCursos = await fetch(`${req.payload.config.serverURL}/api/courses`)
           if (!resCursos.ok) {
             return Response.json({ error: 'Error interno fetch cursos' }, { status: 500 })
           }
           const cursosData = await resCursos.json()
-
-          // OJO: si tu /api/courses devuelve un array directo (no {docs: []}), ajusta esto
           const courses = cursosData.docs || cursosData
 
-          // 2. Armar validatedCart
+          // 2. Armar validatedCart con precios detallados
           const validatedCart = productIds
             .map((id: string) => {
               const course = courses.find((c: any) => c.id === id)
               if (!course) return null
+
+              // Lógica de precios
+              const originalPrice = course.precio || 0
+              const discountedPrice = course.precioConDescuento || null
+              // Si tienes membresía, aquí podrías calcular membershipDiscountPrice.
+              // Como no la estás usando en este endpoint, lo dejamos en null:
+              const membershipDiscountPrice = null
+
+              const finalPrice = discountedPrice ?? originalPrice
+
               return {
                 id: course.id,
                 title: course.title,
-                price: course.precioConDescuento || course.precio,
                 coverImage: course.coverImage,
-                precioConDescuento: course.precioConDescuento,
+                originalPrice, // precio normal
+                discountedPrice, // precio con descuento puntual
+                membershipDiscountPrice, // si tuvieras uno
+                finalPrice, // valor final a cobrar
               }
             })
             .filter(Boolean)
 
-          // 3. Generar cartId y guardar en memoria
-          // (en producción, usa un paquete como 'uuid' o 'crypto.randomUUID')
+          // 3. Guardar en memoria con cartId (sigues igual)
           const cartId = Math.random().toString(36).substring(2, 12)
           ephemeralCartsStore[cartId] = validatedCart
 
-          // 4. Devolver respuesta con Set-Cookie
-          //    Asegúrate de incluir SameSite, Secure, etc. según tu caso
+          // 4. Responder con Set-Cookie
           return new Response(JSON.stringify({ success: true }), {
             status: 200,
             headers: {
               'Content-Type': 'application/json',
-              // Guarda cartId como cookie, HttpOnly para que no lo lea JS fácilmente
               'Set-Cookie': `cartId=${cartId}; Path=/; HttpOnly; Secure; SameSite=None;`,
             },
           })
-        } catch (error: any) {
+        } catch (error) {
           console.error('Error en /validate-cart:', error)
           return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
         }
