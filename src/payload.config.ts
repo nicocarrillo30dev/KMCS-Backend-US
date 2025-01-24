@@ -353,6 +353,52 @@ export default buildConfig({
         }
       }),
     },
+    {
+      path: '/apply-coupon',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          await addDataAndFileToRequest(req)
+          const { couponCode, cartProducts } = req.data as any
+          if (!couponCode || !Array.isArray(cartProducts)) {
+            return Response.json({ error: 'Datos inválidos' }, { status: 400 })
+          }
+          // Buscar cupón
+          const couponRes = await req.payload.find({
+            collection: 'cupones',
+            where: { code: { equals: couponCode } },
+            depth: 1,
+          })
+          const coupon = couponRes.docs?.[0]
+          if (!coupon) {
+            return Response.json(
+              { isValid: false, message: 'Cupón no encontrado' },
+              { status: 404 },
+            )
+          }
+          // 2) Verificar expiración
+          const expirationDate = new Date(String(coupon.expirationDate))
+          const now = new Date()
+          if (now > expirationDate) {
+            return Response.json({ isValid: false, message: 'Cupón expirado' }, { status: 400 })
+          }
+          // Sumar un descuento ficticio
+          const discountAmount = 10
+          const total = cartProducts.reduce((acc: number, p: any) => acc + p.price, 0)
+          const discountedTotal = total - discountAmount
+
+          return Response.json({
+            isValid: true,
+            discountAmount,
+            discountedTotal,
+            message: 'Cupón aplicado con éxito',
+          })
+        } catch (error: any) {
+          console.error('Error en /apply-coupon:', error)
+          return Response.json({ error: 'Error interno' }, { status: 500 })
+        }
+      }),
+    },
   ],
 
   collections: [
