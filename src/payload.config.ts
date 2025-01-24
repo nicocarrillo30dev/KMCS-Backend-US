@@ -241,6 +241,7 @@ export default buildConfig({
                 title: course.title,
                 price: course.precioConDescuento || course.precio,
                 coverImage: course.coverImage,
+                precioConDescuento: course.precioConDescuento,
               }
             })
             .filter(Boolean)
@@ -291,6 +292,57 @@ export default buildConfig({
         } catch (error) {
           console.error('Error en /checkout-data:', error)
           return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
+        }
+      }),
+    },
+    {
+      path: '/get-user-by-email',
+      method: 'get',
+      handler: withCors(async (req) => {
+        const urlString = req.url || 'http://localhost'
+        const url = new URL(urlString, 'http://localhost')
+        const email = url.searchParams.get('email')
+
+        if (!email) {
+          return Response.json({ error: 'Falta email' }, { status: 400 })
+        }
+
+        const result = await req.payload.find({
+          collection: 'usuarios',
+          where: {
+            email: {
+              equals: email,
+            },
+          },
+          limit: 1,
+        })
+
+        if (result.docs.length > 0) {
+          return Response.json({ user: result.docs[0] }, { status: 200 })
+        }
+
+        return Response.json({ user: null }, { status: 200 })
+      }),
+    },
+    {
+      path: '/create-user',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          await addDataAndFileToRequest(req)
+
+          const data: any = req.data
+
+          const created = await req.payload.create({
+            collection: 'usuarios',
+            data,
+          })
+
+          console.log('Usuario creado con éxito (forzando any):', created)
+          return Response.json({ success: true, user: created }, { status: 201 })
+        } catch (error) {
+          console.error('Error al crear usuario:', error)
+          return Response.json({ error: 'Error interno' }, { status: 500 })
         }
       }),
     },
