@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
 import { withCors } from './utils/withCors'
+import { addDataAndFileToRequest } from '@payloadcms/next/utilities'
 
 import { CapturaDePagos } from './collections/CapturasPagos'
 import { Categorias } from './collections/Categorias'
@@ -202,6 +203,49 @@ export default buildConfig({
           )
         }
       }),
+    },
+    {
+      path: '/validate-cart',
+      method: 'post',
+      handler: async (req) => {
+        try {
+          await addDataAndFileToRequest(req) // -> req.data
+          const { productIds, userIdentifier } = req.data as any
+
+          if (!userIdentifier) {
+            return Response.json({ error: 'Falta userIdentifier' }, { status: 400 })
+          }
+          if (!Array.isArray(productIds) || productIds.length === 0) {
+            return Response.json({ error: 'No se enviaron IDs de productos' }, { status: 400 })
+          }
+
+          // Ejemplo: fetch a otro endpoint tuyo
+          const resCursos = await fetch(`${req.payload.config.serverURL}/api/courses`)
+          if (!resCursos.ok) {
+            return Response.json({ error: 'Error interno fetch cursos' }, { status: 500 })
+          }
+          const cursosData = await resCursos.json()
+          const courses = cursosData.docs || []
+
+          // Armar validatedCart (similar a tu código)
+          const validatedCart = productIds
+            .map((id: string) => {
+              const course = courses.find((c: any) => c.id === id)
+              if (!course) return null
+              return {
+                id: course.id,
+                title: course.title,
+                price: course.precioConDescuento || course.precio,
+              }
+            })
+            .filter(Boolean)
+
+          return Response.json({ success: true, validatedCart })
+        } catch (error: any) {
+          console.error('Error en /validate-cart:', error)
+          return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
+        }
+      },
     },
   ],
 
