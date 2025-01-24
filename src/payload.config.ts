@@ -207,7 +207,8 @@ export default buildConfig({
     {
       path: '/validate-cart',
       method: 'post',
-      handler: async (req) => {
+      handler: withCors(async (req) => {
+        // Se añade withCors aquí
         try {
           await addDataAndFileToRequest(req) // -> req.data
           const { productIds, userIdentifier } = req.data as any
@@ -240,12 +241,12 @@ export default buildConfig({
             })
             .filter(Boolean)
 
-          return Response.json({ success: true, validatedCart })
+          return Response.json({ success: true, validatedCart }, { status: 200 }) // Añadido status 200
         } catch (error: any) {
           console.error('Error en /validate-cart:', error)
           return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
         }
-      },
+      }),
     },
   ],
 
