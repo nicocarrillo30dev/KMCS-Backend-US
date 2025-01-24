@@ -240,6 +240,7 @@ export default buildConfig({
                 id: course.id,
                 title: course.title,
                 price: course.precioConDescuento || course.precio,
+                coverImage: course.coverImage,
               }
             })
             .filter(Boolean)
