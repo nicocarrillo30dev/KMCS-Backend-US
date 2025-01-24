@@ -357,16 +357,14 @@ export default buildConfig({
       path: '/apply-coupon',
       method: 'post',
       handler: withCors(async (req) => {
-        // <<--- Se envuelve con withCors
         try {
-          await addDataAndFileToRequest(req) // parsea JSON y archivos
+          await addDataAndFileToRequest(req)
           const { couponCode, cartProducts } = req.data as any
-
           if (!couponCode || !Array.isArray(cartProducts)) {
             return Response.json({ error: 'Datos inválidos' }, { status: 400 })
           }
 
-          // 1) Buscar el cupón en la colección "cupones"
+          // Buscar cupón
           const couponRes = await req.payload.find({
             collection: 'cupones',
             where: { code: { equals: couponCode } },
@@ -380,28 +378,56 @@ export default buildConfig({
             )
           }
 
-          // 2) Verificar fecha de expiración
-          // Forzamos el cast a string por si "expirationDate" es un Date u otro tipo
-          const expirationDate = new Date(String(coupon.expirationDate))
+          // 2) Verificar expiración (si existe)
+          const expirationDate = coupon.expirationDate
+            ? new Date(String(coupon.expirationDate))
+            : null
           const now = new Date()
-          if (now > expirationDate) {
+          if (expirationDate && now > expirationDate) {
             return Response.json({ isValid: false, message: 'Cupón expirado' }, { status: 400 })
           }
 
-          // 3) Calcular el descuento (ejemplo simplificado)
-          //    Ajusta según tu lógica real
-          const discountAmount = 10
-          const total = cartProducts.reduce((acc: number, p: any) => acc + p.price, 0)
+          // 3) Calcular total del carrito
+          //    (aquí asumo que en cartProducts cada item trae "price")
+          const total = cartProducts.reduce((acc: number, p: any) => acc + (p.finalPrice || 0), 0)
+
+          // 4) Lógica de descuento según 'type' y 'amount'
+          let discountAmount = 0
+
+          if (coupon.type === 'percentage') {
+            // e.g. 50 => 50% del total
+            discountAmount = total * (coupon.amount / 100)
+          } else {
+            // 'fixed' => resta un monto fijo
+            discountAmount = coupon.amount
+          }
+
+          // Evitar que descuento exceda el total
+          if (discountAmount > total) {
+            discountAmount = total
+          }
+
+          // 5) Aplica o no restricciones con "products", "excludeProducts", "categories", etc.
+          //    ... Lógica adicional (opcional) ...
+
+          // 6) Si "applyMode" === 'per-cart', basta con lo anterior
+          //    Si 'per-course', deberíamos hacer un cálculo distinto para cada item
+          //    y luego sumarlos.
+
+          // 7) Cálculo final
           const discountedTotal = total - discountAmount
 
-          // 4) Responder
-          return Response.json({
-            isValid: true,
-            discountAmount,
-            discountedTotal,
-            message: 'Cupón aplicado con éxito',
-          })
-        } catch (error: any) {
+          // Respuesta
+          return Response.json(
+            {
+              isValid: true,
+              discountAmount,
+              discountedTotal,
+              message: 'Cupón aplicado con éxito',
+            },
+            { status: 200 },
+          )
+        } catch (error) {
           console.error('Error en /apply-coupon:', error)
           return Response.json({ error: 'Error interno' }, { status: 500 })
         }
