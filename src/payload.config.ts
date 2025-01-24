@@ -357,13 +357,16 @@ export default buildConfig({
       path: '/apply-coupon',
       method: 'post',
       handler: withCors(async (req) => {
+        // <<--- Se envuelve con withCors
         try {
-          await addDataAndFileToRequest(req)
+          await addDataAndFileToRequest(req) // parsea JSON y archivos
           const { couponCode, cartProducts } = req.data as any
+
           if (!couponCode || !Array.isArray(cartProducts)) {
             return Response.json({ error: 'Datos inválidos' }, { status: 400 })
           }
-          // Buscar cupón
+
+          // 1) Buscar el cupón en la colección "cupones"
           const couponRes = await req.payload.find({
             collection: 'cupones',
             where: { code: { equals: couponCode } },
@@ -376,17 +379,22 @@ export default buildConfig({
               { status: 404 },
             )
           }
-          // 2) Verificar expiración
+
+          // 2) Verificar fecha de expiración
+          // Forzamos el cast a string por si "expirationDate" es un Date u otro tipo
           const expirationDate = new Date(String(coupon.expirationDate))
           const now = new Date()
           if (now > expirationDate) {
             return Response.json({ isValid: false, message: 'Cupón expirado' }, { status: 400 })
           }
-          // Sumar un descuento ficticio
+
+          // 3) Calcular el descuento (ejemplo simplificado)
+          //    Ajusta según tu lógica real
           const discountAmount = 10
           const total = cartProducts.reduce((acc: number, p: any) => acc + p.price, 0)
           const discountedTotal = total - discountAmount
 
+          // 4) Responder
           return Response.json({
             isValid: true,
             discountAmount,
