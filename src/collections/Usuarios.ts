@@ -9,26 +9,24 @@ export const Usuarios: CollectionConfig = {
       method: 'get',
       handler: withCors(async (req) => {
         try {
-          // 1) Ensure the user is logged in. Typically you do:
-          //    const userId = req.user?.id
-          //    If your auth strategy is different, adjust as needed.
+          // 1) Check if user is logged in
           const userId = req.user?.id
           if (!userId) {
             return Response.json({ error: 'No autorizado' }, { status: 401 })
           }
 
-          // 2) Find all enrollment docs for this user (depth=0 for minimal data)
+          // 2) Find enrollment docs for this user
+          //    minimal data => depth: 0
           const enrollmentResult = await req.payload.find({
             collection: 'enrollment',
             where: {
               usuario: { equals: userId },
-              // optionally also filter status if you only want 'activo' or
-              // if you want to show all, remove or adjust:
+              // If you only want 'activo', include here:
               // status: { equals: 'activo' },
             },
-            depth: 0, // minimal data in the enrollment docs
-            limit: 100, // just an example, adjust as needed
-            overrideAccess: true, // Typically you might skip access if internal
+            depth: 0,
+            limit: 100,
+            overrideAccess: true, // skip access if internal usage
           })
 
           const enrollmentDocs = enrollmentResult.docs
@@ -40,17 +38,16 @@ export const Usuarios: CollectionConfig = {
             })
           }
 
-          // 3) Collect all course IDs from these enrollment docs
-          //    Each doc: { usuario, cursos: [IDs], status, fechaDeExpiracion }
+          // 3) Gather all course IDs
           const courseIDs = new Set<number>()
-          enrollmentDocs.forEach((enr: any) => {
-            // enr.cursos is presumably an array of numbers (IDs)
+          for (const enr of enrollmentDocs) {
             if (Array.isArray(enr.cursos)) {
-              enr.cursos.forEach((c: number) => courseIDs.add(c))
+              // cast to number[] if needed
+              ;(enr.cursos as number[]).forEach((cId) => courseIDs.add(cId))
             }
-          })
+          }
 
-          // If no courses at all, just return empty
+          // If no courseIDs at all:
           if (courseIDs.size === 0) {
             return Response.json({
               cursosInscritos: [],
@@ -58,15 +55,13 @@ export const Usuarios: CollectionConfig = {
             })
           }
 
-          // 4) Use Local API to find minimal info from collection "cursos"
-          //    This is your "Courses" collection slug.
-          //    We'll do pagination: false to get them all in one shot.
-          //    We'll pass "select" to pick only minimal fields (like your /api/courses).
+          // 4) fetch those courses from 'cursos' with depth: 1
+          //    so we get populated coverImage
           const coursesResult = await req.payload.find({
-            collection: 'cursos', // or whatever your slug is
-            pagination: false, // get all
-            overrideAccess: true, // skip access control internally
-            depth: 0, // minimal depth
+            collection: 'cursos',
+            pagination: false,
+            overrideAccess: true,
+            depth: 1,
             where: {
               id: { in: Array.from(courseIDs) },
             },
@@ -82,59 +77,69 @@ export const Usuarios: CollectionConfig = {
             },
           })
 
-          // Build a map of courseID -> course object
           const foundCourses = coursesResult.docs || []
+          // Build a map of id -> minimal course data with a URL for coverImage
           const coursesMap = new Map<number, any>()
+
           foundCourses.forEach((course: any) => {
-            coursesMap.set(course.id, course)
+            // Transform the coverImage => we only want coverImage.SupaURL
+            let finalCover = null
+            if (
+              course.coverImage &&
+              typeof course.coverImage === 'object' &&
+              course.coverImage.SupaURL
+            ) {
+              finalCover = course.coverImage.SupaURL
+            }
+
+            coursesMap.set(course.id, {
+              ...course,
+              coverImage: finalCover,
+            })
           })
 
-          // 5) Combine data from enrollment + course
-          //    We'll build an array of "enrolled courses"
-          //    that includes { id, title, coverImage, accessUntil, status, etc. }
-          //    Then we separate by date => "cursosInscritos" vs "expiredCourses"
+          // 5) Merge data from enrollment + course
           const now = new Date()
           const finalCourses: any[] = []
 
           for (const enr of enrollmentDocs) {
-            const expiration = new Date(enr.fechaDeExpiracion)
-            const courseStatus = enr.status // or 'activo' / 'inactivo' etc.
-            const userHasAccess = expiration >= now && courseStatus === 'activo'
+            const expDate = new Date(enr.fechaDeExpiracion)
+            // e.g. "activo" vs "inactivo"
+            const enrStatus = enr.status
 
-            // For each course ID in enr.cursos:
             if (Array.isArray(enr.cursos)) {
               ;(enr.cursos as number[]).forEach((courseId) => {
                 const found = coursesMap.get(courseId)
                 if (found) {
-                  // Merge them
                   finalCourses.push({
-                    // from the course object
+                    // from the course
                     id: found.id,
                     title: found.title,
                     slug: found.slug,
-                    coverImage: found.coverImage,
-                    estado: found.estado, // optional
+                    coverImage: found.coverImage, // now a URL
+                    estado: found.estado,
                     rating: found.promedioreviews ?? null,
                     // from the enrollment doc
-                    status: courseStatus,
-                    accessUntil: expiration.toISOString(),
+                    status: enrStatus,
+                    accessUntil: expDate.toISOString(),
                   })
                 }
               })
             }
           }
 
-          // 6) Separate them into active vs expired based on accessUntil and status
-          const cursosInscritos = finalCourses.filter((c: any) => {
-            const expDate = new Date(c.accessUntil)
-            return expDate >= now && c.status === 'activo'
+          // 6) Separate active vs expired
+          const cursosInscritos = finalCourses.filter((c) => {
+            const d = new Date(c.accessUntil)
+            // active if not expired & status is 'activo'
+            return d >= now && c.status === 'activo'
           })
-          const expiredCourses = finalCourses.filter((c: any) => {
-            const expDate = new Date(c.accessUntil)
-            return expDate < now || c.status !== 'activo'
+          const expiredCourses = finalCourses.filter((c) => {
+            const d = new Date(c.accessUntil)
+            return d < now || c.status !== 'activo'
           })
 
-          // 7) Return the final shape
+          // 7) Return shape
           return Response.json({
             cursosInscritos,
             expiredCourses,
