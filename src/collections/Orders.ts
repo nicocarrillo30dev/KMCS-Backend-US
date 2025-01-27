@@ -117,6 +117,7 @@ export const pedidos: CollectionConfig = {
           name: 'pricewithDiscount',
           type: 'number',
           label: 'Precio con Descuento',
+          required: false,
         },
         {
           name: 'customTotalPrice',
