@@ -74,6 +74,7 @@ export const Usuarios: CollectionConfig = {
               precio: true,
               precioConDescuento: true,
               coverImage: true,
+              Modulos: true,
             },
           })
 
