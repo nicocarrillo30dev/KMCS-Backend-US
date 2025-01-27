@@ -120,6 +120,7 @@ export const Usuarios: CollectionConfig = {
                     coverImage: found.coverImage, // now a URL
                     estado: found.estado,
                     rating: found.promedioreviews ?? null,
+                    Modulos: found.Modulos,
                     // from the enrollment doc
                     status: enrStatus,
                     accessUntil: expDate.toISOString(),
