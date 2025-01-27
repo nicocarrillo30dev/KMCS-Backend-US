@@ -433,6 +433,114 @@ export default buildConfig({
         }
       }),
     },
+    {
+      path: '/myorders',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          // 1. Parse userId from the query string
+          const urlString = req.url ?? 'http://localhost'
+          const url = new URL(urlString, 'http://localhost')
+          const userId = url.searchParams.get('userId')
+
+          if (!userId) {
+            return Response.json(
+              { error: 'Falta el parámetro "userId" en la query.' },
+              { status: 400 },
+            )
+          }
+
+          const numericUserId = Number(userId)
+
+          // 2. Fetch orders (pedidos) for that userId, depth=0
+          const ordersResult = await req.payload.find({
+            collection: 'pedidos', // <-- adjust to your collection name
+            where: {
+              client: { equals: numericUserId }, // or change 'client' to your field name
+            },
+            depth: 0,
+            pagination: false,
+          })
+
+          const orders = ordersResult.docs // array of orders
+
+          // 3. Collect *numeric* course IDs from each order
+          const allCourseIDs = new Set<number>()
+
+          for (const order of orders) {
+            if (Array.isArray(order.cursos)) {
+              for (const course of order.cursos) {
+                // type-guard: only add if it's actually a number
+                if (typeof course.cursoRef === 'number') {
+                  allCourseIDs.add(course.cursoRef)
+                }
+              }
+            }
+          }
+
+          // If no course IDs, just return the orders
+          if (allCourseIDs.size === 0) {
+            return Response.json(orders, { status: 200 })
+          }
+
+          // 4. Fetch only those courses by ID
+          const coursesResult = await req.payload.find({
+            collection: 'cursos', // <-- your "courses" collection
+            pagination: false,
+            where: {
+              id: {
+                in: Array.from(allCourseIDs), // convert the Set to an array
+              },
+            },
+            // Only fetch the fields you actually need:
+            select: {
+              id: true,
+              title: true,
+              coverImage: true,
+            },
+          })
+
+          // Create a map so we can quickly find courses by ID
+          const courseMap = new Map<number, any>()
+          for (const c of coursesResult.docs) {
+            courseMap.set(c.id, c)
+          }
+
+          // 5. Merge the data into each order’s “cursos” array
+          const mergedOrders = orders.map((order) => {
+            const newOrder = { ...order }
+
+            if (Array.isArray(newOrder.cursos)) {
+              newOrder.cursos = newOrder.cursos.map((courseItem) => {
+                if (typeof courseItem.cursoRef === 'number') {
+                  const matchingCourse = courseMap.get(courseItem.cursoRef)
+                  if (matchingCourse) {
+                    return {
+                      ...courseItem,
+                      title: matchingCourse.title,
+                      coverImage:
+                        matchingCourse.coverImage && typeof matchingCourse.coverImage === 'object'
+                          ? (matchingCourse.coverImage.SupaURL ?? null)
+                          : (matchingCourse.coverImage ?? null),
+                    }
+                  }
+                }
+                // If cursoRef is not a number, or no matching course was found
+                return courseItem
+              })
+            }
+
+            return newOrder
+          })
+
+          // 6. Return the final orders
+          return Response.json(mergedOrders, { status: 200 })
+        } catch (error) {
+          console.error('Error en /myorders:', error)
+          return Response.json({ error: 'Error al obtener pedidos' }, { status: 500 })
+        }
+      }),
+    },
   ],
 
   collections: [
