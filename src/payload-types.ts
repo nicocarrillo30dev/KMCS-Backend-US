@@ -460,6 +460,7 @@ export interface Pedido {
     | {
         cursoRef: number | Curso;
         price?: number | null;
+        pricewithDiscount?: number | null;
         customTotalPrice?: number | null;
         discountApplied?: number | null;
         /**
@@ -956,6 +957,7 @@ export interface PedidosSelect<T extends boolean = true> {
     | {
         cursoRef?: T;
         price?: T;
+        pricewithDiscount?: T;
         customTotalPrice?: T;
         discountApplied?: T;
         finalPrice?: T;

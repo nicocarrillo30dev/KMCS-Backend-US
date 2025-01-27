@@ -114,6 +114,11 @@ export const pedidos: CollectionConfig = {
           label: 'Precio Original',
         },
         {
+          name: 'pricewithDiscount',
+          type: 'number',
+          label: 'Precio con Descuento',
+        },
+        {
           name: 'customTotalPrice',
           type: 'number',
           label: 'Precio Editado Manualmente',
