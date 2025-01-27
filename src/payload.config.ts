@@ -646,6 +646,203 @@ export default buildConfig({
         }
       }),
     },
+    {
+      path: '/myorder-by-pedidoid',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          // 1) Get the 'pedidoID' from the query string
+          const urlString = req.url ?? 'http://localhost'
+          const url = new URL(urlString, 'http://localhost')
+          const pedidoID = url.searchParams.get('pedidoID')
+
+          if (!pedidoID) {
+            return Response.json({ error: 'Falta el parámetro "pedidoID"' }, { status: 400 })
+          }
+
+          // 2) Fetch the single "pedidos" doc with that pedidoID, depth=0
+          const orderResult = await req.payload.find({
+            collection: 'pedidos',
+            where: {
+              pedidoID: { equals: pedidoID },
+            },
+            depth: 0,
+            pagination: false,
+          })
+
+          if (!orderResult.docs || orderResult.docs.length === 0) {
+            return Response.json({ error: 'Pedido no encontrado' }, { status: 404 })
+          }
+
+          // We'll assume the first (and only) doc is our order
+          const order = orderResult.docs[0]
+
+          // 3) Gather references from cursos, talleresPresenciales, membresias
+          const allCourseIDs = new Set<number>()
+          const allTallerIDs = new Set<number>()
+          const allMembresiaIDs = new Set<number>()
+
+          if (Array.isArray(order.cursos)) {
+            for (const c of order.cursos) {
+              if (typeof c.cursoRef === 'number') {
+                allCourseIDs.add(c.cursoRef)
+              }
+            }
+          }
+          if (Array.isArray(order.talleresPresenciales)) {
+            for (const t of order.talleresPresenciales) {
+              if (typeof t.tallerRef === 'number') {
+                allTallerIDs.add(t.tallerRef)
+              }
+            }
+          }
+          if (Array.isArray(order.membresias)) {
+            for (const m of order.membresias) {
+              if (typeof m.membresiaRef === 'number') {
+                allMembresiaIDs.add(m.membresiaRef)
+              }
+            }
+          }
+
+          // If no refs at all, just return the order
+          if (allCourseIDs.size === 0 && allTallerIDs.size === 0 && allMembresiaIDs.size === 0) {
+            return Response.json(order, { status: 200 })
+          }
+
+          // 4) Fetch referenced docs from each collection
+          const [coursesResult, talleresResult, membresiasResult] = await Promise.all([
+            allCourseIDs.size > 0
+              ? req.payload.find({
+                  collection: 'cursos',
+                  pagination: false,
+                  where: {
+                    id: { in: Array.from(allCourseIDs) },
+                  },
+                  select: {
+                    id: true,
+                    title: true,
+                    coverImage: true,
+                  },
+                })
+              : Promise.resolve({ docs: [] }),
+
+            allTallerIDs.size > 0
+              ? req.payload.find({
+                  collection: 'talleres-presenciales',
+                  pagination: false,
+                  where: {
+                    id: { in: Array.from(allTallerIDs) },
+                  },
+                  select: {
+                    id: true,
+                    title: true,
+                    coverImage: true,
+                    precio: true,
+                  },
+                })
+              : Promise.resolve({ docs: [] }),
+
+            allMembresiaIDs.size > 0
+              ? req.payload.find({
+                  collection: 'membresias',
+                  pagination: false,
+                  where: {
+                    id: { in: Array.from(allMembresiaIDs) },
+                  },
+                  select: {
+                    id: true,
+                    nombre: true,
+                    Precio: true,
+                  },
+                })
+              : Promise.resolve({ docs: [] }),
+          ])
+
+          // 5) Create Maps for quick lookup
+          const courseMap = new Map<number, any>()
+          for (const c of coursesResult.docs) {
+            courseMap.set(c.id, c)
+          }
+
+          const tallerMap = new Map<number, any>()
+          for (const t of talleresResult.docs) {
+            tallerMap.set(t.id, t)
+          }
+
+          const membresiaMap = new Map<number, any>()
+          for (const mem of membresiasResult.docs) {
+            membresiaMap.set(mem.id, mem)
+          }
+
+          // 6) Merge the data back into the single order
+          const finalOrder = JSON.parse(JSON.stringify(order)) // clone
+
+          // Merge cursos
+          if (Array.isArray(finalOrder.cursos)) {
+            finalOrder.cursos = finalOrder.cursos.map((c: any) => {
+              if (typeof c.cursoRef === 'number') {
+                const found = courseMap.get(c.cursoRef)
+                if (found) {
+                  return {
+                    ...c,
+                    title: found.title,
+                    coverImage:
+                      found.coverImage && typeof found.coverImage === 'object'
+                        ? (found.coverImage.SupaURL ?? null)
+                        : (found.coverImage ?? null),
+                  }
+                }
+              }
+              return c
+            })
+          }
+
+          // Merge talleresPresenciales
+          if (Array.isArray(finalOrder.talleresPresenciales)) {
+            finalOrder.talleresPresenciales = finalOrder.talleresPresenciales.map((t: any) => {
+              if (typeof t.tallerRef === 'number') {
+                const found = tallerMap.get(t.tallerRef)
+                if (found) {
+                  return {
+                    ...t,
+                    title: found.title,
+                    precio: found.precio,
+                    coverImage:
+                      found.coverImage && typeof found.coverImage === 'object'
+                        ? (found.coverImage.SupaURL ?? null)
+                        : (found.coverImage ?? null),
+                  }
+                }
+              }
+              return t
+            })
+          }
+
+          // Merge membresias
+          if (Array.isArray(finalOrder.membresias)) {
+            finalOrder.membresias = finalOrder.membresias.map((m: any) => {
+              if (typeof m.membresiaRef === 'number') {
+                const found = membresiaMap.get(m.membresiaRef)
+                if (found) {
+                  return {
+                    ...m,
+                    nombre: found.nombre,
+                    precioDefinidoEnColeccion: found.Precio,
+                  }
+                }
+              }
+              return m
+            })
+          }
+
+          // 7) Return the final merged order
+          return Response.json(finalOrder, { status: 200 })
+        } catch (error) {
+          console.error('Error en /myorder-by-pedidoid:', error)
+          return Response.json({ error: 'Error al obtener pedido' }, { status: 500 })
+        }
+      }),
+    },
   ],
 
   collections: [
