@@ -454,9 +454,9 @@ export default buildConfig({
 
           // 2. Fetch orders (pedidos) for that userId, depth=0
           const ordersResult = await req.payload.find({
-            collection: 'pedidos', // <-- adjust to your collection name
+            collection: 'pedidos', // Adjust if your collection is named differently
             where: {
-              client: { equals: numericUserId }, // or change 'client' to your field name
+              client: { equals: numericUserId },
             },
             depth: 0,
             pagination: false,
@@ -464,52 +464,120 @@ export default buildConfig({
 
           const orders = ordersResult.docs // array of orders
 
-          // 3. Collect *numeric* course IDs from each order
+          // 3. Collect numeric IDs from each array in the orders:
           const allCourseIDs = new Set<number>()
+          const allTallerIDs = new Set<number>()
+          const allMembresiaIDs = new Set<number>()
 
           for (const order of orders) {
+            // A) cursos
             if (Array.isArray(order.cursos)) {
               for (const course of order.cursos) {
-                // type-guard: only add if it's actually a number
                 if (typeof course.cursoRef === 'number') {
                   allCourseIDs.add(course.cursoRef)
                 }
               }
             }
+            // B) talleresPresenciales
+            if (Array.isArray(order.talleresPresenciales)) {
+              for (const taller of order.talleresPresenciales) {
+                if (typeof taller.tallerRef === 'number') {
+                  allTallerIDs.add(taller.tallerRef)
+                }
+              }
+            }
+            // C) membresias
+            if (Array.isArray(order.membresias)) {
+              for (const mem of order.membresias) {
+                if (typeof mem.membresiaRef === 'number') {
+                  allMembresiaIDs.add(mem.membresiaRef)
+                }
+              }
+            }
           }
 
-          // If no course IDs, just return the orders
-          if (allCourseIDs.size === 0) {
+          // If no items at all, return orders directly
+          if (allCourseIDs.size === 0 && allTallerIDs.size === 0 && allMembresiaIDs.size === 0) {
             return Response.json(orders, { status: 200 })
           }
 
-          // 4. Fetch only those courses by ID
-          const coursesResult = await req.payload.find({
-            collection: 'cursos', // <-- your "courses" collection
-            pagination: false,
-            where: {
-              id: {
-                in: Array.from(allCourseIDs), // convert the Set to an array
-              },
-            },
-            // Only fetch the fields you actually need:
-            select: {
-              id: true,
-              title: true,
-              coverImage: true,
-            },
-          })
+          // 4. Fetch each collection in parallel
+          //    Adjust "where" fields and "select" to match your schema.
+          const [coursesResult, talleresResult, membresiasResult] = await Promise.all([
+            allCourseIDs.size > 0
+              ? req.payload.find({
+                  collection: 'cursos',
+                  pagination: false,
+                  where: {
+                    id: {
+                      in: Array.from(allCourseIDs),
+                    },
+                  },
+                  select: {
+                    id: true,
+                    title: true,
+                    coverImage: true,
+                  },
+                })
+              : Promise.resolve({ docs: [] }),
 
-          // Create a map so we can quickly find courses by ID
+            allTallerIDs.size > 0
+              ? req.payload.find({
+                  collection: 'talleres-presenciales',
+                  pagination: false,
+                  where: {
+                    id: {
+                      in: Array.from(allTallerIDs),
+                    },
+                  },
+                  select: {
+                    id: true,
+                    title: true,
+                    coverImage: true,
+                    precio: true,
+                  },
+                })
+              : Promise.resolve({ docs: [] }),
+
+            allMembresiaIDs.size > 0
+              ? req.payload.find({
+                  collection: 'membresias',
+                  pagination: false,
+                  where: {
+                    id: {
+                      in: Array.from(allMembresiaIDs),
+                    },
+                  },
+                  select: {
+                    id: true,
+                    nombre: true,
+                    Precio: true,
+                  },
+                })
+              : Promise.resolve({ docs: [] }),
+          ])
+
+          // 5. Create maps
           const courseMap = new Map<number, any>()
           for (const c of coursesResult.docs) {
             courseMap.set(c.id, c)
           }
 
-          // 5. Merge the data into each order’s “cursos” array
+          const tallerMap = new Map<number, any>()
+          for (const t of talleresResult.docs) {
+            tallerMap.set(t.id, t)
+          }
+
+          const membresiaMap = new Map<number, any>()
+          for (const m of membresiasResult.docs) {
+            membresiaMap.set(m.id, m)
+          }
+
+          // 6. Merge the data into each order’s arrays
           const mergedOrders = orders.map((order) => {
             const newOrder = { ...order }
 
+            // A) Merge "cursos"
             if (Array.isArray(newOrder.cursos)) {
               newOrder.cursos = newOrder.cursos.map((courseItem) => {
                 if (typeof courseItem.cursoRef === 'number') {
@@ -525,15 +593,52 @@ export default buildConfig({
                     }
                   }
                 }
-                // If cursoRef is not a number, or no matching course was found
                 return courseItem
+              })
+            }
+
+            // B) Merge "talleresPresenciales"
+            if (Array.isArray(newOrder.talleresPresenciales)) {
+              newOrder.talleresPresenciales = newOrder.talleresPresenciales.map((tallerItem) => {
+                if (typeof tallerItem.tallerRef === 'number') {
+                  const matchingTaller = tallerMap.get(tallerItem.tallerRef)
+                  if (matchingTaller) {
+                    return {
+                      ...tallerItem,
+                      title: matchingTaller.title,
+                      precio: matchingTaller.precio,
+                      coverImage:
+                        matchingTaller.coverImage && typeof matchingTaller.coverImage === 'object'
+                          ? (matchingTaller.coverImage.SupaURL ?? null)
+                          : (matchingTaller.coverImage ?? null),
+                    }
+                  }
+                }
+                return tallerItem
+              })
+            }
+
+            // C) Merge "membresias"
+            if (Array.isArray(newOrder.membresias)) {
+              newOrder.membresias = newOrder.membresias.map((memItem) => {
+                if (typeof memItem.membresiaRef === 'number') {
+                  const matchingMembresia = membresiaMap.get(memItem.membresiaRef)
+                  if (matchingMembresia) {
+                    return {
+                      ...memItem,
+                      nombre: matchingMembresia.nombre,
+                      precioDefinidoEnColeccion: matchingMembresia.Precio,
+                    }
+                  }
+                }
+                return memItem
               })
             }
 
             return newOrder
           })
 
-          // 6. Return the final orders
+          // 7. Return the final orders
           return Response.json(mergedOrders, { status: 200 })
         } catch (error) {
           console.error('Error en /myorders:', error)
