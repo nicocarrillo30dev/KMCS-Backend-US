@@ -371,6 +371,12 @@ export const Cursos: CollectionConfig = {
                       type: 'text',
                       required: false,
                     },
+                    {
+                      name: 'descripcionMiniatura',
+                      label: 'Descripción de Miniatura',
+                      type: 'textarea',
+                      required: false,
+                    },
                   ],
                 },
               ],

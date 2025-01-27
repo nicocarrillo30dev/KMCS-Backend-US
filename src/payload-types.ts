@@ -201,6 +201,7 @@ export interface Curso {
                */
               duration?: string | null;
               miniaturaUrl?: string | null;
+              descripcionMiniatura?: string | null;
               id?: string | null;
             }[]
           | null;
@@ -828,6 +829,7 @@ export interface CursosSelect<T extends boolean = true> {
               contenidoArchivo?: T;
               duration?: T;
               miniaturaUrl?: T;
+              descripcionMiniatura?: T;
               id?: T;
             };
         id?: T;
