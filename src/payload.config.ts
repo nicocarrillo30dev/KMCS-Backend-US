@@ -859,7 +859,7 @@ export default buildConfig({
               estado: true,
               precio: true,
               coverImage: true,
-              // Add any other fields you need from 'talleres-presenciales'
+              promedioreviews: true,
             },
           })
 
