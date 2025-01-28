@@ -843,6 +843,44 @@ export default buildConfig({
         }
       }),
     },
+    {
+      path: '/attendance-courses',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          const result = await req.payload.find({
+            collection: 'talleres-presenciales', // Updated collection name
+            pagination: false,
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              estado: true,
+              precio: true,
+              coverImage: true,
+              // Add any other fields you need from 'talleres-presenciales'
+            },
+          })
+
+          const transformedDocs = result.docs.map((course) => {
+            if (course.coverImage && typeof course.coverImage === 'object') {
+              return {
+                ...course,
+                coverImage: course.coverImage.SupaURL || null,
+              }
+            }
+            return course
+          })
+
+          const filteredDocs = transformedDocs.filter((course) => course.estado !== 'oculto')
+
+          return Response.json(filteredDocs, { status: 200 })
+        } catch (error) {
+          console.error('Error en /attendance-courses:', error)
+          return Response.json({ error: 'Error al obtener cursos presenciales' }, { status: 500 })
+        }
+      }),
+    },
   ],
 
   collections: [
