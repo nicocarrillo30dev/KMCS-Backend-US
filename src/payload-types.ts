@@ -24,6 +24,7 @@ export interface Config {
     preguntasRespuestas: PreguntasRespuesta;
     'registro-de-membresias': RegistroDeMembresia;
     'reviews-cursos-virtuales': ReviewsCursosVirtuale;
+    'reviews-talleres-presenciales': ReviewsTalleresPresenciale;
     'talleres-presenciales': TalleresPresenciale;
     usuarios: Usuario;
     'payload-locked-documents': PayloadLockedDocument;
@@ -45,6 +46,7 @@ export interface Config {
     preguntasRespuestas: PreguntasRespuestasSelect<false> | PreguntasRespuestasSelect<true>;
     'registro-de-membresias': RegistroDeMembresiasSelect<false> | RegistroDeMembresiasSelect<true>;
     'reviews-cursos-virtuales': ReviewsCursosVirtualesSelect<false> | ReviewsCursosVirtualesSelect<true>;
+    'reviews-talleres-presenciales': ReviewsTalleresPresencialesSelect<false> | ReviewsTalleresPresencialesSelect<true>;
     'talleres-presenciales': TalleresPresencialesSelect<false> | TalleresPresencialesSelect<true>;
     usuarios: UsuariosSelect<false> | UsuariosSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -544,6 +546,7 @@ export interface TalleresPresenciale {
         id?: string | null;
       }[]
     | null;
+  promedioreviews?: number | null;
   precio: number;
   /**
    * Añade grupos de fechas. Cada grupo puede tener múltiples fechas.
@@ -642,6 +645,23 @@ export interface ReviewsCursosVirtuale {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews-talleres-presenciales".
+ */
+export interface ReviewsTalleresPresenciale {
+  id: number;
+  usuario: number | Usuario;
+  taller: number | TalleresPresenciale;
+  nombreUsuario: string;
+  paisUsuario?: string | null;
+  estrellas: number;
+  reseña: string;
+  fecha: string;
+  estado: 'aceptada' | 'denegada';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -698,6 +718,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'reviews-cursos-virtuales';
         value: number | ReviewsCursosVirtuale;
+      } | null)
+    | ({
+        relationTo: 'reviews-talleres-presenciales';
+        value: number | ReviewsTalleresPresenciale;
       } | null)
     | ({
         relationTo: 'talleres-presenciales';
@@ -1043,6 +1067,22 @@ export interface ReviewsCursosVirtualesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews-talleres-presenciales_select".
+ */
+export interface ReviewsTalleresPresencialesSelect<T extends boolean = true> {
+  usuario?: T;
+  taller?: T;
+  nombreUsuario?: T;
+  paisUsuario?: T;
+  estrellas?: T;
+  reseña?: T;
+  fecha?: T;
+  estado?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "talleres-presenciales_select".
  */
 export interface TalleresPresencialesSelect<T extends boolean = true> {
@@ -1064,6 +1104,7 @@ export interface TalleresPresencialesSelect<T extends boolean = true> {
         descripcionBeneficio?: T;
         id?: T;
       };
+  promedioreviews?: T;
   precio?: T;
   gruposDeFechas?:
     | T

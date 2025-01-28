@@ -23,6 +23,7 @@ import { pedidos } from './collections/Orders'
 import PreguntasRespuestas from './collections/PreguntasAlumnos'
 import { RegistroDeMembresias } from './collections/RegistroMembresia'
 import ReviewsCursosVirtuales from './collections/ReseñasCursosVirtuales'
+import ReviewsTalleresPresenciales from './collections/ReseñasTalleresPresenciales'
 import { TalleresPresenciales } from './collections/TalleresPresenciales'
 import { Usuarios } from './collections/Usuarios'
 
@@ -881,6 +882,87 @@ export default buildConfig({
         }
       }),
     },
+    {
+      path: '/average-reviews-talleres',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          // 1. Obtener el `tallerId` de la query
+          const urlString = (req.url ?? 'http://localhost') as string
+          const url = new URL(urlString, 'http://localhost')
+          const tallerId = url.searchParams.get('tallerId')
+
+          if (!tallerId) {
+            return new Response(JSON.stringify({ error: 'Falta el parámetro "tallerId"' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            })
+          }
+
+          // 2. Obtener las reseñas asociadas a ese taller
+          const reviewsUrl = `https://admin.nicolascarrillo.com/api/reviews-talleres-presenciales?depth=0&where[taller][equals]=${tallerId}`
+          const response = await fetch(reviewsUrl)
+          if (!response.ok) {
+            throw new Error(`Error al obtener reseñas: ${response.statusText}`)
+          }
+          const data = await response.json()
+          const { docs = [] } = data
+
+          // 3. Calcular el promedio de estrellas
+          if (docs.length === 0) {
+            // Sin reseñas => promedio = 0
+            return new Response(JSON.stringify({ averageRating: 0, totalReviews: 0 }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            })
+          }
+
+          // Suponemos que la calificación está en "estrellas"
+          const sum = docs.reduce((acc: number, review: { estrellas?: number }) => {
+            return acc + (review.estrellas || 0)
+          }, 0)
+          const averageRating = sum / docs.length
+
+          // 4. Hacer PATCH a /api/talleres-presenciales/[tallerId] para actualizar "promedioreviews"
+          const patchResponse = await fetch(
+            `https://admin.nicolascarrillo.com/api/talleres-presenciales/${tallerId}`,
+            {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                // Si tu colección tiene autenticación, agrega el header de autorización aquí
+                // 'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                promedioreviews: averageRating, // Campo que queremos actualizar
+              }),
+            },
+          )
+
+          if (!patchResponse.ok) {
+            throw new Error(`Error al actualizar taller: ${patchResponse.statusText}`)
+          }
+
+          // (Opcional) Puedes leer la respuesta del PATCH si deseas
+          // const updatedTaller = await patchResponse.json()
+
+          // 5. Retornar el promedio y la cantidad de reseñas
+          return new Response(
+            JSON.stringify({
+              averageRating,
+              totalReviews: docs.length,
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        } catch (error) {
+          console.error('Error en /average-reviews-talleres:', error)
+          return new Response(
+            JSON.stringify({ error: 'Error al obtener/actualizar promedio de reseñas' }),
+            { status: 500, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+      }),
+    },
   ],
 
   collections: [
@@ -897,6 +979,7 @@ export default buildConfig({
     PreguntasRespuestas,
     RegistroDeMembresias,
     ReviewsCursosVirtuales,
+    ReviewsTalleresPresenciales,
     TalleresPresenciales,
     Usuarios,
   ],

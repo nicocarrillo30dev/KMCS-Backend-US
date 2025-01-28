@@ -147,6 +147,12 @@ export const TalleresPresenciales: CollectionConfig = {
                 },
               ],
             },
+            {
+              name: 'promedioreviews',
+              type: 'number',
+              label: 'Promedio Reviews Taller',
+              required: false,
+            },
           ],
         },
         {
