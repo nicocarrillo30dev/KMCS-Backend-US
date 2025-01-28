@@ -517,6 +517,7 @@ export interface TalleresPresenciale {
    */
   slug?: string | null;
   estado?: ('publico' | 'oculto') | null;
+  cantidaddePostresoRecetas?: string | null;
   /**
    * Añade una descripción general del curso. Este texto aparecerá encima de la lista de recetas en la página del curso.
    */
@@ -1048,6 +1049,7 @@ export interface TalleresPresencialesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   estado?: T;
+  cantidaddePostresoRecetas?: T;
   descripcionCurso?: T;
   contenido?:
     | T

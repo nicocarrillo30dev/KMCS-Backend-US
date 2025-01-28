@@ -71,6 +71,12 @@ export const TalleresPresenciales: CollectionConfig = {
           label: 'Texto',
           fields: [
             {
+              name: 'cantidaddePostresoRecetas',
+              type: 'text',
+              label: 'Cantidad de Postres o Recetas',
+              required: false,
+            },
+            {
               name: 'descripcionCurso',
               type: 'textarea',
               label: 'Descripción del Curso',
