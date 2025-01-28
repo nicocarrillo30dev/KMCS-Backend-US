@@ -860,6 +860,7 @@ export default buildConfig({
               precio: true,
               coverImage: true,
               promedioreviews: true,
+              gruposDeFechas: true,
             },
           })
 
