@@ -964,6 +964,134 @@ export default buildConfig({
         }
       }),
     },
+    {
+      path: '/preguntas-usuario',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          // 1. Obtener el usuarioId de la query.
+          const urlString = (req.url ?? 'http://localhost') as string
+          const url = new URL(urlString, 'http://localhost')
+          const usuarioId = url.searchParams.get('usuarioId')
+
+          if (!usuarioId) {
+            return Response.json({ error: 'Falta el parámetro "usuarioId"' }, { status: 400 })
+          }
+
+          // 2. Consultar la colección "preguntasRespuestas" con depth=0, filtrando por el usuario
+          const preguntasResult = await req.payload.find({
+            collection: 'preguntasRespuestas',
+            depth: 0,
+            where: {
+              usuario: {
+                equals: usuarioId,
+              },
+            },
+          })
+
+          const { docs } = preguntasResult
+
+          // 3. Reunir todos los IDs de imágenes que aparezcan en los mensajes
+          const imageIds: number[] = []
+          // 3b. Reunir todos los IDs de cursos
+          const courseIds: number[] = []
+
+          docs.forEach((doc) => {
+            // (a) Recolectamos imágenes
+            doc.mensajes?.forEach((msg: any) => {
+              if (msg.tipo === 'imagen' && msg.imagen) {
+                imageIds.push(msg.imagen)
+              }
+            })
+
+            // (b) Recolectamos el ID de curso si existe
+            if (typeof doc.curso === 'number') {
+              courseIds.push(doc.curso)
+            }
+          })
+
+          // 4. Construir un mapa { idFoto: SupaURL } desde la colección fotosPreguntas
+          let imagesMap: Record<number, string> = {}
+          if (imageIds.length > 0) {
+            const fotosResult = await req.payload.find({
+              collection: 'fotosPreguntas',
+              depth: 0,
+              where: {
+                id: {
+                  in: imageIds,
+                },
+              },
+            })
+
+            if (fotosResult?.docs?.length > 0) {
+              imagesMap = fotosResult.docs.reduce((acc: Record<number, string>, foto: any) => {
+                acc[foto.id] = foto.SupaURL
+                return acc
+              }, {})
+            }
+          }
+
+          // 5. Construir un mapa { idCurso: tituloCurso } desde la colección cursos
+          let coursesMap: Record<string, string> = {}
+
+          const uniqueCourseIds = Array.from(new Set(courseIds))
+
+          if (uniqueCourseIds.length > 0) {
+            const cursosResult = await req.payload.find({
+              collection: 'cursos',
+              depth: 0,
+              pagination: false,
+              where: {
+                id: {
+                  in: uniqueCourseIds,
+                },
+              },
+              select: {
+                id: true,
+                title: true,
+              },
+            })
+
+            if (cursosResult?.docs?.length > 0) {
+              coursesMap = cursosResult.docs.reduce((acc: Record<string, string>, course: any) => {
+                acc[String(course.id)] = course.title
+                return acc
+              }, {})
+            }
+          }
+
+          // 6. Transformar los docs:
+          //    - Reemplazar "imagen: ID" por la SupaURL en los mensajes
+          //    - Añadir un campo "cursoTitulo" (u otro nombre) con el title del curso
+          const transformedDocs = docs.map((doc) => {
+            const newMensajes =
+              doc.mensajes?.map((msg: any) => {
+                if (msg.tipo === 'imagen' && msg.imagen) {
+                  return {
+                    ...msg,
+                    imagen: imagesMap[msg.imagen] || null,
+                  }
+                }
+                return msg
+              }) ?? []
+
+            // Convertimos doc.curso a string para usarlo como key
+            const cursoTitulo = doc.curso ? coursesMap[String(doc.curso)] || null : null
+
+            return {
+              ...doc,
+              mensajes: newMensajes,
+              cursoTitulo,
+            }
+          })
+
+          return Response.json(transformedDocs, { status: 200 })
+        } catch (error) {
+          console.error('Error en /preguntas-usuario:', error)
+          return Response.json({ error: 'Error al obtener las preguntas' }, { status: 500 })
+        }
+      }),
+    },
   ],
 
   collections: [
