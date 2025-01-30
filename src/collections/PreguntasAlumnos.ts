@@ -13,6 +13,11 @@ const PreguntasRespuestas: CollectionConfig = {
     singular: 'Pregunta y Respuesta',
     plural: 'Preguntas y Respuestas',
   },
+  access: {
+    read: () => true,
+    create: () => true,
+    update: () => true,
+  },
   fields: [
     {
       name: 'usuario',
