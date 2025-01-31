@@ -212,7 +212,10 @@ export default buildConfig({
       method: 'post',
       handler: withCors(async (req) => {
         try {
+          // Permite que Payload parsee el body y maneje archivos.
           await addDataAndFileToRequest(req)
+
+          // Extraemos los campos que envía el frontend.
           const { productIds, userIdentifier } = req.data as any
 
           if (!userIdentifier) {
@@ -222,46 +225,83 @@ export default buildConfig({
             return Response.json({ error: 'No se enviaron IDs de productos' }, { status: 400 })
           }
 
-          // 1. Obtener los cursos
-          const resCursos = await fetch(`${req.payload.config.serverURL}/api/courses`)
+          // 1. Obtener todos los cursos virtuales
+          const resCursos = await fetch(`${req.payload.config.serverURL}/api/cursos`)
           if (!resCursos.ok) {
-            return Response.json({ error: 'Error interno fetch cursos' }, { status: 500 })
+            return Response.json({ error: 'Error interno al obtener cursos' }, { status: 500 })
           }
-          const cursosData = await resCursos.json()
-          const courses = cursosData.docs || cursosData
+          const dataCursos = await resCursos.json()
+          const courses = dataCursos.docs || dataCursos
+          const coursesMapped = courses.map((c: any) => ({
+            ...c,
+            _type: 'curso virtual',
+          }))
 
-          // 2. Armar validatedCart con precios detallados
+          // 2. Obtener talleres presenciales
+          const resTalleres = await fetch(
+            `${req.payload.config.serverURL}/api/talleres-presenciales`,
+          )
+          if (!resTalleres.ok) {
+            return Response.json(
+              { error: 'Error interno al obtener talleres presenciales' },
+              { status: 500 },
+            )
+          }
+          const dataTalleres = await resTalleres.json()
+          const talleres = dataTalleres.docs || dataTalleres
+          const talleresMapped = talleres.map((t: any) => ({
+            ...t,
+            _type: 'taller presencial',
+          }))
+
+          // 3. Obtener membresías
+          const resMembresias = await fetch(`${req.payload.config.serverURL}/api/membresias`)
+          if (!resMembresias.ok) {
+            return Response.json({ error: 'Error interno al obtener membresías' }, { status: 500 })
+          }
+          const dataMembresias = await resMembresias.json()
+          const membresias = dataMembresias.docs || dataMembresias
+          const membresiasMapped = membresias.map((m: any) => ({
+            ...m,
+            _type: 'membresía',
+          }))
+
+          // Combinar todos los productos en un solo array
+          const allProducts = [...coursesMapped, ...talleresMapped, ...membresiasMapped]
+
+          // 4. Validar los productos que llegan en productIds
           const validatedCart = productIds
             .map((id: string) => {
-              const course = courses.find((c: any) => c.id === id)
-              if (!course) return null
+              // Buscar el producto en el array combinado
+              const product = allProducts.find((p: any) => p.id === id)
+              if (!product) return null
 
               // Lógica de precios
-              const originalPrice = course.precio || 0
-              const discountedPrice = course.precioConDescuento || null
-              // Si tienes membresía, aquí podrías calcular membershipDiscountPrice.
-              // Como no la estás usando en este endpoint, lo dejamos en null:
+              const originalPrice = product.precio || 0
+              const discountedPrice = product.precioConDescuento || null
+              // Si tuvieras lógica de membresía, podrías calcularla aquí
               const membershipDiscountPrice = null
-
+              // Precio final
               const finalPrice = discountedPrice ?? originalPrice
 
               return {
-                id: course.id,
-                title: course.title,
-                coverImage: course.coverImage,
-                originalPrice, // precio normal
-                discountedPrice, // precio con descuento puntual
-                membershipDiscountPrice, // si tuvieras uno
-                finalPrice, // valor final a cobrar
+                id: product.id,
+                type: product._type, // "curso virtual", "taller presencial" o "membresía"
+                title: product.title,
+                coverImage: product.coverImage,
+                originalPrice,
+                discountedPrice,
+                membershipDiscountPrice,
+                finalPrice,
               }
             })
             .filter(Boolean)
 
-          // 3. Guardar en memoria con cartId (sigues igual)
+          // 5. Guardar el carrito validado en memoria con un cartId único
           const cartId = Math.random().toString(36).substring(2, 12)
           ephemeralCartsStore[cartId] = validatedCart
 
-          // 4. Responder con Set-Cookie
+          // 6. Devolver respuesta con la cookie cartId
           return new Response(JSON.stringify({ success: true }), {
             status: 200,
             headers: {
@@ -280,10 +320,10 @@ export default buildConfig({
       method: 'get',
       handler: withCors(async (req) => {
         try {
-          // 1. Obtener la cabecera "Cookie" (Payload CMS la provee en req.headers).
+          // 1. Obtener la cabecera "Cookie"
           const cookieHeader = req.headers.get('cookie') || ''
 
-          // 2. Extraer cartId usando una expresión regular simple
+          // 2. Extraer cartId usando una expresión regular
           const match = cookieHeader.match(/cartId=([^;]+)/)
           if (!match) {
             return Response.json({ validatedCart: [] }, { status: 200 })
@@ -292,8 +332,6 @@ export default buildConfig({
 
           // 3. Recuperar el carrito almacenado en memoria
           const validatedCart = ephemeralCartsStore[cartId] || []
-
-          // (Opcional) Si quieres protegerlo con un "userIdentifier" o algo más, hazlo aquí.
 
           // 4. Devolver el carrito
           return Response.json({ validatedCart }, { status: 200 })
