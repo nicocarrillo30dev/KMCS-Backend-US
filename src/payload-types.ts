@@ -371,6 +371,7 @@ export interface Usuario {
     | null;
   numero?: number | null;
   role: 'Admin' | 'User';
+  fotoUsuario?: (number | null) | FotosUsuario;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -384,9 +385,9 @@ export interface Usuario {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fotosPreguntas".
+ * via the `definition` "fotosUsuarios".
  */
-export interface FotosPregunta {
+export interface FotosUsuario {
   id: number;
   SupaURL?: string | null;
   prefix?: string | null;
@@ -404,9 +405,9 @@ export interface FotosPregunta {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fotosUsuarios".
+ * via the `definition` "fotosPreguntas".
  */
-export interface FotosUsuario {
+export interface FotosPregunta {
   id: number;
   SupaURL?: string | null;
   prefix?: string | null;
@@ -1143,6 +1144,7 @@ export interface UsuariosSelect<T extends boolean = true> {
   pais?: T;
   numero?: T;
   role?: T;
+  fotoUsuario?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
