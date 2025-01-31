@@ -251,7 +251,7 @@ export default buildConfig({
 
           // 2. Recorrer productArray y buscar en la colección que corresponda al type
           const validatedCart = productArray
-            .map(({ id, type, frontImage }) => {
+            .map(({ id, type }) => {
               let foundDoc: any = null
 
               if (type === 'curso virtual') {
@@ -295,7 +295,7 @@ export default buildConfig({
               return {
                 id: foundDoc.id,
                 title: foundDoc.title || foundDoc.nombre || 'Sin título',
-                coverImage: frontImage,
+                coverImage: foundDoc.coverImage || null,
                 originalPrice,
                 discountedPrice,
                 membershipDiscountPrice,
