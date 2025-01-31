@@ -1092,6 +1092,60 @@ export default buildConfig({
         }
       }),
     },
+    {
+      path: '/registro',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          // 👇 Asegura que `req.data` contenga el JSON correctamente parseado
+          await addDataAndFileToRequest(req)
+
+          // ✅ Define manualmente el tipo esperado en `req.data`
+          const data = req.data as {
+            nombre: string
+            apellidos: string
+            email: string
+            password: string
+          }
+
+          const { nombre, apellidos, email, password } = data
+
+          // 1. Validaciones mínimas
+          if (!nombre || !apellidos || !email || !password) {
+            return Response.json({ error: 'Todos los campos son obligatorios' }, { status: 400 })
+          }
+
+          // 2. Crear el usuario en Payload CMS
+          const createdUser = await req.payload.create({
+            collection: 'usuarios',
+            data: {
+              nombre,
+              apellidos,
+              email,
+              password,
+              role: 'User',
+            },
+            overrideAccess: true,
+          })
+
+          console.log('Usuario creado en Payload:', createdUser)
+
+          return Response.json(
+            {
+              message: 'Usuario creado con éxito',
+              user: createdUser,
+            },
+            { status: 201 },
+          )
+        } catch (error) {
+          console.error('Error en el endpoint /api/registro:', error)
+          return Response.json(
+            { error: 'Error interno en el servidor', detalles: String(error) },
+            { status: 500 },
+          )
+        }
+      }),
+    },
   ],
 
   collections: [

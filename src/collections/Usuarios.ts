@@ -1,6 +1,38 @@
 import type { CollectionConfig } from 'payload'
 import { withCors } from '../utils/withCors'
+import type { CollectionAfterChangeHook } from 'payload'
 
+const enrollNewUser: CollectionAfterChangeHook = async ({ doc, operation, req }) => {
+  if (operation === 'create') {
+    const defaultCourses = [41330, 39826] // IDs de cursos
+
+    // Esperamos un pequeño tiempo para asegurar que el usuario exista en la DB
+    setTimeout(async () => {
+      try {
+        for (const cursoId of defaultCourses) {
+          await req.payload.create({
+            collection: 'enrollment',
+            data: {
+              usuario: doc.id, // ID del usuario ya creado
+              cursos: [cursoId], // Un curso a la vez
+              status: 'activo',
+              fechaDeExpiracion: new Date(
+                new Date().setFullYear(new Date().getFullYear() + 1),
+              ).toISOString(),
+            },
+            overrideAccess: true,
+          })
+
+          console.log(`Usuario ${doc.id} inscrito en curso ${cursoId}`)
+        }
+      } catch (error) {
+        console.error(`Error inscribiendo usuario ${doc.id}:`, error)
+      }
+    }, 100) // Pequeña espera para asegurar que el usuario se haya guardado en la DB
+  }
+
+  return doc
+}
 export const Usuarios: CollectionConfig = {
   slug: 'usuarios',
   endpoints: [
@@ -25,7 +57,7 @@ export const Usuarios: CollectionConfig = {
               // status: { equals: 'activo' },
             },
             depth: 0,
-            limit: 100,
+            limit: 120,
             overrideAccess: true, // skip access if internal usage
           })
 
@@ -160,6 +192,9 @@ export const Usuarios: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'email',
+  },
+  hooks: {
+    afterChange: [enrollNewUser],
   },
   auth: {},
 
