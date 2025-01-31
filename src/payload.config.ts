@@ -213,26 +213,23 @@ export default buildConfig({
       handler: withCors(async (req) => {
         try {
           await addDataAndFileToRequest(req)
-          const { productIds, userIdentifier } = req.data as any
+          const { productArray, userIdentifier } = req.data as any
 
           if (!userIdentifier) {
             return Response.json({ error: 'Falta userIdentifier' }, { status: 400 })
           }
-          if (!Array.isArray(productIds) || productIds.length === 0) {
-            return Response.json({ error: 'No se enviaron IDs de productos' }, { status: 400 })
+          if (!Array.isArray(productArray) || productArray.length === 0) {
+            return Response.json({ error: 'No se enviaron productos' }, { status: 400 })
           }
 
-          // 1. Obtener los documentos de la colección "cursos"
-          //    Ojo: tu slug es "cursos" y la ruta es /api/cursos (no /api/courses).
+          // 1. Fetch de cada colección
           const resCursos = await fetch(`${req.payload.config.serverURL}/api/cursos`)
           if (!resCursos.ok) {
             return Response.json({ error: 'Error interno al obtener cursos' }, { status: 500 })
           }
           const dataCursos = await resCursos.json()
-          // normalizamos
           const courses = dataCursos.docs || dataCursos
 
-          // 2. Obtener talleres presenciales (slug "talleres-presenciales")
           const resTalleres = await fetch(
             `${req.payload.config.serverURL}/api/talleres-presenciales`,
           )
@@ -245,7 +242,6 @@ export default buildConfig({
           const dataTalleres = await resTalleres.json()
           const talleres = dataTalleres.docs || dataTalleres
 
-          // 3. Obtener membresías (slug "membresias")
           const resMembresias = await fetch(`${req.payload.config.serverURL}/api/membresias`)
           if (!resMembresias.ok) {
             return Response.json({ error: 'Error interno al obtener membresías' }, { status: 500 })
@@ -253,79 +249,66 @@ export default buildConfig({
           const dataMembresias = await resMembresias.json()
           const membresias = dataMembresias.docs || dataMembresias
 
-          // Unificamos todo en un array para luego hacer un "find" por ID
-          // NOTA: Ajustamos la nomenclatura de campos para mantener consistencia.
-          //       - En "cursos" y "talleres-presenciales" hay "title", "precio", "coverImage".
-          //       - En "membresias", el campo de precio es "Precio" (mayúscula) y el nombre es "nombre".
-          // Simplemente mapeamos todo a un objeto estándar con: id, title, precio, precioConDescuento, coverImage, etc.
+          // 2. Recorrer productArray y buscar en la colección que corresponda al type
+          const validatedCart = productArray
+            .map(({ id, type }) => {
+              let foundDoc: any = null
 
-          const allProducts = [
-            ...courses.map((item: any) => ({
-              ...item,
-              _type: 'curso',
-              title: item.title, // para cursos
-              precio: item.precio, // normal
-              precioConDescuento: item.precioConDescuento || null,
-              coverImage: item.coverImage || null,
-            })),
-            ...talleres.map((item: any) => ({
-              ...item,
-              _type: 'taller',
-              title: item.title, // para talleres
-              precio: item.precio,
-              // aquí no tienes precioConDescuento en la colección, quedará null
-              precioConDescuento: null,
-              coverImage: item.coverImage || null,
-            })),
-            ...membresias.map((item: any) => ({
-              ...item,
-              _type: 'membresia',
-              // en membresías, el "nombre" es el "título"
-              title: item.nombre,
-              // en membresías, el precio se llama "Precio" (con mayúscula)
-              precio: item.Precio,
-              precioConDescuento: null, // no existe este campo
-              coverImage: null, // no existe coverImage
-            })),
-          ]
-
-          // 4. Armar validatedCart con precios detallados, tomando cada ID que recibimos
-          const validatedCart = productIds
-            .map((id: number | string) => {
-              // Asegúrate de que la comparación sea consistente:
-              // Si en tu BD `id` es un número, compara como número;
-              // si en Payload es tipo string, conviértelo a string.
-              // Ejemplo con cast a number:
-              const product = allProducts.find((p: any) => p.id === id)
-
-              if (!product) {
+              if (type === 'curso virtual') {
+                // Buscar en 'cursos'
+                foundDoc = courses.find((c: any) => c.id === id)
+              } else if (type === 'taller presencial') {
+                // Buscar en 'talleres-presenciales'
+                foundDoc = talleres.find((t: any) => t.id === id)
+              } else if (type === 'membresía') {
+                // Buscar en 'membresias'
+                foundDoc = membresias.find((m: any) => m.id === id)
+              } else {
+                // Tipo desconocido, retornamos null
                 return null
               }
 
-              // Lógica de precios
-              const originalPrice = product.precio || 0
-              const discountedPrice = product.precioConDescuento || null
-              // Puedes implementar lógica de descuento de membresía aquí si lo deseas
+              if (!foundDoc) {
+                return null // No se encontró un doc con ese ID y type
+              }
+
+              // Arma los precios
+              // Ojo: la colección de cursos usa .precio y .precioConDescuento
+              // la de talleres usa .precio (sin descuento)
+              // la de membresías usa .Precio (mayúscula) y no tiene descuento
+              let originalPrice = 0
+              let discountedPrice: number | null = null
+
+              if (type === 'curso virtual') {
+                originalPrice = foundDoc.precio || 0
+                discountedPrice = foundDoc.precioConDescuento || null
+              } else if (type === 'taller presencial') {
+                originalPrice = foundDoc.precio || 0
+              } else if (type === 'membresía') {
+                originalPrice = foundDoc.Precio || 0
+              }
+
+              // Por ahora, membershipDiscountPrice = null
               const membershipDiscountPrice = null
               const finalPrice = discountedPrice ?? originalPrice
 
               return {
-                id: product.id,
-                title: product.title,
-                coverImage: product.coverImage,
-                originalPrice, // precio normal
-                discountedPrice, // precio con descuento si aplica
-                membershipDiscountPrice, // si tuvieras uno
-                finalPrice, // valor final a cobrar
+                id: foundDoc.id,
+                title: foundDoc.title || foundDoc.nombre || 'Sin título',
+                coverImage: foundDoc.coverImage || null,
+                originalPrice,
+                discountedPrice,
+                membershipDiscountPrice,
+                finalPrice,
               }
             })
             .filter(Boolean)
 
-          // 5. Guardar en memoria con cartId (igual que antes)
+          // 3. Guardar en memoria con cartId
           const cartId = Math.random().toString(36).substring(2, 12)
           ephemeralCartsStore[cartId] = validatedCart
 
-          // 6. Responder con Set-Cookie
+          // 4. Responder con la cookie
           return new Response(JSON.stringify({ success: true }), {
             status: 200,
             headers: {
@@ -344,20 +327,14 @@ export default buildConfig({
       method: 'get',
       handler: withCors(async (req) => {
         try {
-          // 1. Obtener la cabecera "Cookie" (Payload CMS la provee en req.headers).
           const cookieHeader = req.headers.get('cookie') || ''
-
-          // 2. Extraer cartId usando una expresión regular simple
           const match = cookieHeader.match(/cartId=([^;]+)/)
           if (!match) {
             return Response.json({ validatedCart: [] }, { status: 200 })
           }
           const cartId = match[1]
 
-          // 3. Recuperar el carrito almacenado en memoria
           const validatedCart = ephemeralCartsStore[cartId] || []
-
-          // 4. Devolver el carrito
           return Response.json({ validatedCart }, { status: 200 })
         } catch (error) {
           console.error('Error en /checkout-data:', error)
