@@ -1047,18 +1047,31 @@ export default buildConfig({
             // (a) Recolectamos imágenes
             doc.mensajes?.forEach((msg: any) => {
               if (msg.tipo === 'imagen' && msg.imagen) {
-                imageIds.push(msg.imagen)
+                // msg.imagen es el ID de la foto (tipo number o string)
+                // lo casteamos a number por si acaso
+                const numericID = Number(msg.imagen)
+                if (!Number.isNaN(numericID)) {
+                  imageIds.push(numericID)
+                }
               }
             })
 
             // (b) Recolectamos el ID de curso si existe
             if (typeof doc.curso === 'number') {
               courseIds.push(doc.curso)
+            } else if (typeof doc.curso === 'string') {
+              // si tu schema almacena el curso como string, conviértelo a number si corresponde
+              const numID = Number(doc.curso)
+              if (!Number.isNaN(numID)) {
+                courseIds.push(numID)
+              }
             }
           })
 
-          // 4. Construir un mapa { idFoto: SupaURL } desde la colección fotosPreguntas
-          let imagesMap: Record<number, string> = {}
+          // 4. Construir un mapa { idFoto: fotoDocCompleto }
+          //    en lugar de solo URL. Así devolvemos
+          //    { id, SupaURL, filename, ... }
+          let imagesMap: Record<number, any> = {}
           if (imageIds.length > 0) {
             const fotosResult = await req.payload.find({
               collection: 'fotosPreguntas',
@@ -1071,8 +1084,10 @@ export default buildConfig({
             })
 
             if (fotosResult?.docs?.length > 0) {
-              imagesMap = fotosResult.docs.reduce((acc: Record<number, string>, foto: any) => {
-                acc[foto.id] = foto.SupaURL
+              imagesMap = fotosResult.docs.reduce((acc: Record<number, any>, foto: any) => {
+                // foto es el doc completo de la colección fotosPreguntas
+                // lo guardamos tal cual en el map, con la llave = foto.id
+                acc[foto.id] = foto
                 return acc
               }, {})
             }
@@ -1080,7 +1095,6 @@ export default buildConfig({
 
           // 5. Construir un mapa { idCurso: tituloCurso } desde la colección cursos
           let coursesMap: Record<string, string> = {}
-
           const uniqueCourseIds = Array.from(new Set(courseIds))
 
           if (uniqueCourseIds.length > 0) {
@@ -1108,22 +1122,31 @@ export default buildConfig({
           }
 
           // 6. Transformar los docs:
-          //    - Reemplazar "imagen: ID" por la SupaURL en los mensajes
-          //    - Añadir un campo "cursoTitulo" (u otro nombre) con el title del curso
+          //    - Reemplazar msg.imagen con el OBJETO de imagen (o null).
+          //    - Añadir un campo "cursoTitulo" con el title del curso
           const transformedDocs = docs.map((doc) => {
             const newMensajes =
               doc.mensajes?.map((msg: any) => {
                 if (msg.tipo === 'imagen' && msg.imagen) {
+                  const numID = Number(msg.imagen)
+                  if (!Number.isNaN(numID) && imagesMap[numID]) {
+                    // Devolvemos el doc completo de la foto
+                    return {
+                      ...msg,
+                      imagen: imagesMap[numID],
+                    }
+                  }
                   return {
                     ...msg,
-                    imagen: imagesMap[msg.imagen] || null,
+                    imagen: null,
                   }
                 }
                 return msg
               }) ?? []
 
             // Convertimos doc.curso a string para usarlo como key
-            const cursoTitulo = doc.curso ? coursesMap[String(doc.curso)] || null : null
+            const cursoIDStr = String(doc.curso)
+            const cursoTitulo = coursesMap[cursoIDStr] || null
 
             return {
               ...doc,
