@@ -222,7 +222,7 @@ export default buildConfig({
             return Response.json({ error: 'No se enviaron productos' }, { status: 400 })
           }
 
-          // 1. Fetch de cada colección
+          // 1. Fetch each collection
           const resCursos = await fetch(`${req.payload.config.serverURL}/api/cursos`)
           if (!resCursos.ok) {
             return Response.json({ error: 'Error interno al obtener cursos' }, { status: 500 })
@@ -249,33 +249,30 @@ export default buildConfig({
           const dataMembresias = await resMembresias.json()
           const membresias = dataMembresias.docs || dataMembresias
 
-          // 2. Recorrer productArray y buscar en la colección que corresponda al type
+          // 2. Build validatedCart
           const validatedCart = productArray
-            .map(({ id, type }) => {
+            .map(({ id, type, frontImage }) => {
               let foundDoc: any = null
 
               if (type === 'curso virtual') {
-                // Buscar en 'cursos'
+                // find in "cursos"
                 foundDoc = courses.find((c: any) => c.id === id)
               } else if (type === 'taller presencial') {
-                // Buscar en 'talleres-presenciales'
+                // find in "talleres-presenciales"
                 foundDoc = talleres.find((t: any) => t.id === id)
               } else if (type === 'membresía') {
-                // Buscar en 'membresias'
+                // find in "membresias"
                 foundDoc = membresias.find((m: any) => m.id === id)
               } else {
-                // Tipo desconocido, retornamos null
+                // Unknown type
                 return null
               }
 
               if (!foundDoc) {
-                return null // No se encontró un doc con ese ID y type
+                return null // Not found
               }
 
-              // Arma los precios
-              // Ojo: la colección de cursos usa .precio y .precioConDescuento
-              // la de talleres usa .precio (sin descuento)
-              // la de membresías usa .Precio (mayúscula) y no tiene descuento
+              // 2a. Determine pricing
               let originalPrice = 0
               let discountedPrice: number | null = null
 
@@ -288,14 +285,25 @@ export default buildConfig({
                 originalPrice = foundDoc.Precio || 0
               }
 
-              // Por ahora, membershipDiscountPrice = null
               const membershipDiscountPrice = null
               const finalPrice = discountedPrice ?? originalPrice
 
+              // 2b. Determine finalImage
+              // For courses/talleres, if doc has an upload with .SupaURL, use that.
+              // Otherwise fallback to frontImage.
+              let finalImage: string | null = null
+              if (foundDoc.coverImage && foundDoc.coverImage.SupaURL) {
+                finalImage = foundDoc.coverImage.SupaURL
+              } else {
+                finalImage = frontImage || null
+              }
+
+              // 2c. Return the validated product
               return {
                 id: foundDoc.id,
+                type, // might want to keep it
                 title: foundDoc.title || foundDoc.nombre || 'Sin título',
-                coverImage: foundDoc.coverImage || null,
+                coverImage: finalImage,
                 originalPrice,
                 discountedPrice,
                 membershipDiscountPrice,
@@ -304,11 +312,11 @@ export default buildConfig({
             })
             .filter(Boolean)
 
-          // 3. Guardar en memoria con cartId
+          // 3. Store in ephemeral memory
           const cartId = Math.random().toString(36).substring(2, 12)
           ephemeralCartsStore[cartId] = validatedCart
 
-          // 4. Responder con la cookie
+          // 4. Return success + set cartId cookie
           return new Response(JSON.stringify({ success: true }), {
             status: 200,
             headers: {
