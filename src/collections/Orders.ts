@@ -273,32 +273,34 @@ export const pedidos: CollectionConfig = {
         // ENROLAR CURSOS
         // -------------------------
         if (Array.isArray(doc.cursos) && doc.cursos.length > 0) {
-          const courseIds = doc.cursos.map((item: any) => {
-            if (typeof item.cursoRef === 'object') {
-              return item.cursoRef.id
-            }
-            return item.cursoRef
-          })
-
-          console.log(`Enrolling user ${userId} in courses:`, courseIds)
-
-          // Crear un enrollment con todos los cursos juntos
-          // (si quieres uno por cada curso, puedes hacer un for)
           const expirationDate = new Date()
           expirationDate.setFullYear(expirationDate.getFullYear() + 1)
 
-          await req.payload.create({
-            collection: 'enrollment',
-            data: {
-              usuario: userId,
-              cursos: courseIds,
-              fechaDeExpiracion: expirationDate.toISOString(),
-              status: 'activo',
-            },
-            overrideAccess: true,
-          })
+          for (const item of doc.cursos) {
+            let courseId: any
+            if (typeof item.cursoRef === 'object') {
+              courseId = item.cursoRef.id
+            } else {
+              courseId = item.cursoRef
+            }
+            console.log(`Enrolling user ${userId} in course:`, courseId)
 
-          console.log(`Enrollment de cursos creado para el pedido ${doc.id}`)
+            // Crear enrollment individual para este curso
+            await req.payload.create({
+              collection: 'enrollment',
+              data: {
+                usuario: userId,
+                cursos: [courseId], // Enrollment individual: un solo curso en un array
+                fechaDeExpiracion: expirationDate.toISOString(),
+                status: 'activo',
+              },
+              overrideAccess: true,
+            })
+
+            // Espera 100 ms antes de procesar el siguiente curso
+            await new Promise((resolve) => setTimeout(resolve, 100))
+          }
+          console.log(`Enrollments created individually for pedido ${doc.id}`)
         }
 
         // -------------------------
