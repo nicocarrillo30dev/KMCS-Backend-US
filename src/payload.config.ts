@@ -223,7 +223,7 @@ export default buildConfig({
           }
 
           // 1. Fetch each collection
-          const resCursos = await fetch(`${req.payload.config.serverURL}/api/cursos`)
+          const resCursos = await fetch(`${req.payload.config.serverURL}/api/cursos?limit=150`)
           if (!resCursos.ok) {
             return Response.json({ error: 'Error interno al obtener cursos' }, { status: 500 })
           }
@@ -1025,7 +1025,7 @@ export default buildConfig({
             return Response.json({ error: 'Falta el parámetro "usuarioId"' }, { status: 400 })
           }
 
-          // 2. Consultar la colección "preguntasRespuestas" con depth=0, filtrando por el usuario
+          // 2. Buscar en "preguntasRespuestas" (depth=0)
           const preguntasResult = await req.payload.find({
             collection: 'preguntasRespuestas',
             depth: 0,
@@ -1038,17 +1038,14 @@ export default buildConfig({
 
           const { docs } = preguntasResult
 
-          // 3. Reunir todos los IDs de imágenes que aparezcan en los mensajes
+          // 3. Reunir IDs de imágenes y IDs de cursos
           const imageIds: number[] = []
-          // 3b. Reunir todos los IDs de cursos
           const courseIds: number[] = []
 
           docs.forEach((doc) => {
-            // (a) Recolectamos imágenes
+            // Recolectar imágenes
             doc.mensajes?.forEach((msg: any) => {
               if (msg.tipo === 'imagen' && msg.imagen) {
-                // msg.imagen es el ID de la foto (tipo number o string)
-                // lo casteamos a number por si acaso
                 const numericID = Number(msg.imagen)
                 if (!Number.isNaN(numericID)) {
                   imageIds.push(numericID)
@@ -1056,11 +1053,10 @@ export default buildConfig({
               }
             })
 
-            // (b) Recolectamos el ID de curso si existe
+            // Recolectar ID del curso
             if (typeof doc.curso === 'number') {
               courseIds.push(doc.curso)
             } else if (typeof doc.curso === 'string') {
-              // si tu schema almacena el curso como string, conviértelo a number si corresponde
               const numID = Number(doc.curso)
               if (!Number.isNaN(numID)) {
                 courseIds.push(numID)
@@ -1068,9 +1064,7 @@ export default buildConfig({
             }
           })
 
-          // 4. Construir un mapa { idFoto: fotoDocCompleto }
-          //    en lugar de solo URL. Así devolvemos
-          //    { id, SupaURL, filename, ... }
+          // 4. Mapa de fotos: { idFoto: docFotoCompleto }
           let imagesMap: Record<number, any> = {}
           if (imageIds.length > 0) {
             const fotosResult = await req.payload.find({
@@ -1085,15 +1079,13 @@ export default buildConfig({
 
             if (fotosResult?.docs?.length > 0) {
               imagesMap = fotosResult.docs.reduce((acc: Record<number, any>, foto: any) => {
-                // foto es el doc completo de la colección fotosPreguntas
-                // lo guardamos tal cual en el map, con la llave = foto.id
                 acc[foto.id] = foto
                 return acc
               }, {})
             }
           }
 
-          // 5. Construir un mapa { idCurso: tituloCurso } desde la colección cursos
+          // 5. Mapa de cursos: { idCurso: titleCurso }
           let coursesMap: Record<string, string> = {}
           const uniqueCourseIds = Array.from(new Set(courseIds))
 
@@ -1121,16 +1113,14 @@ export default buildConfig({
             }
           }
 
-          // 6. Transformar los docs:
-          //    - Reemplazar msg.imagen con el OBJETO de imagen (o null).
-          //    - Añadir un campo "cursoTitulo" con el title del curso
+          // 6. Transformar docs => "msg.imagen" = objeto de la colección fotosPreguntas
           const transformedDocs = docs.map((doc) => {
             const newMensajes =
               doc.mensajes?.map((msg: any) => {
                 if (msg.tipo === 'imagen' && msg.imagen) {
                   const numID = Number(msg.imagen)
                   if (!Number.isNaN(numID) && imagesMap[numID]) {
-                    // Devolvemos el doc completo de la foto
+                    // Asignamos el documento completo de la foto
                     return {
                       ...msg,
                       imagen: imagesMap[numID],
@@ -1144,7 +1134,6 @@ export default buildConfig({
                 return msg
               }) ?? []
 
-            // Convertimos doc.curso a string para usarlo como key
             const cursoIDStr = String(doc.curso)
             const cursoTitulo = coursesMap[cursoIDStr] || null
 
