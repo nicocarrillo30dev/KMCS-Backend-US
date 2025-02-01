@@ -359,14 +359,16 @@ export default buildConfig({
         try {
           // Se espera recibir un JSON con:
           // userData, products, total, discountedTotal, coupon y selectedMethod
-          if (!req.json) {
-            throw new Error('No se pudo obtener el body de la solicitud')
-          }
-          const body = await req.json()
+          const body = await req.json!() // usamos req.json!() para evitar el error de TS
           const { userData, products, total, discountedTotal, coupon, selectedMethod } = body
 
           // Genera el pedidoID usando uuidv4
           const pedidoID = uuidv4()
+
+          // Función auxiliar para extraer el número del id, en caso de venir en formato "taller-4", "curso-xxx" o "membresia-xxx"
+          const extractNumericId = (id: string, prefix: string): number => {
+            return Number(id.replace(prefix, ''))
+          }
 
           // Para cada producto, nos aseguramos de obtener la referencia numérica
           const cursos = products
@@ -375,7 +377,7 @@ export default buildConfig({
               cursoRef:
                 typeof p.payloadId !== 'undefined'
                   ? Number(p.payloadId)
-                  : Number(String(p.id).replace('curso-', '')),
+                  : extractNumericId(String(p.id), 'curso-'),
               price: p.originalPrice,
               pricewithDiscount: p.discountedPrice,
               customTotalPrice: null,
@@ -387,11 +389,11 @@ export default buildConfig({
           const talleresPresenciales = products
             .filter((p: any) => p.type === 'taller presencial')
             .map((p: any) => ({
-              // Usamos "tallerRef" (como lo espera el endpoint) y nos aseguramos de que sea un número
+              // Usamos "tallerRef" y nos aseguramos que sea un número
               tallerRef:
                 typeof p.payloadId !== 'undefined'
                   ? Number(p.payloadId)
-                  : Number(String(p.id).replace('taller-', '')),
+                  : extractNumericId(String(p.id), 'taller-'),
               price: p.originalPrice,
               pricewithDiscount: p.discountedPrice,
               customTotalPrice: null,
@@ -407,7 +409,7 @@ export default buildConfig({
               membresiaRef:
                 typeof p.payloadId !== 'undefined'
                   ? Number(p.payloadId)
-                  : Number(String(p.id).replace('membresia-', '')),
+                  : extractNumericId(String(p.id), 'membresia-'),
               price: p.originalPrice,
               customTotalPrice: null,
               discountApplied: null,
@@ -419,7 +421,7 @@ export default buildConfig({
           const metodoDePago =
             selectedMethod === 'bankTransfer' ? 'Transferencia Bancaria' : 'Tarjeta de Crédito'
 
-          // Construimos el objeto del pedido (asegúrate de que coincida con el schema de la colección "pedidos")
+          // Construir el objeto del pedido (asegúrate de que coincida con el schema de la colección "pedidos")
           const orderData = {
             pedidoID,
             date: new Date().toISOString(),
@@ -438,7 +440,7 @@ export default buildConfig({
             totalPrice: finalTotal,
           }
 
-          // Se hace un cast a any para evitar el error de tipos y se usa el operador ! para req.payload
+          // Usamos req.payload! para forzar que no sea undefined y hacemos un cast a any
           const createdOrder = await req.payload!.create({
             collection: 'pedidos',
             data: orderData as any,
