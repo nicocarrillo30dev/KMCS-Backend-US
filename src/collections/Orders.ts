@@ -246,8 +246,7 @@ export const pedidos: CollectionConfig = {
           return
         }
 
-        // 2. Si es actualización, podemos verificar si YA estaba completado antes
-        //    para NO reprocesar (opcional, quítalo si quieres re-ejecutar cada vez).
+        // 2. Si es actualización, verificar si ya estaba completado para no reprocesar
         if (operation === 'update') {
           if (originalDoc?.state === 'completado') {
             console.log(
@@ -259,9 +258,8 @@ export const pedidos: CollectionConfig = {
 
         // A estas alturas, el pedido es nuevo (create) o acaba de cambiar a "completado" (update)
 
-        // 3. Extraer el ID del usuario (puede llegar como objeto o ID)
+        // 3. Extraer el ID del usuario (puede venir como objeto o como ID)
         const userId = typeof doc.client === 'object' ? doc.client?.id : doc.client
-
         if (!userId) {
           console.log(
             `Pedido ${doc.id} está 'completado' pero no tiene 'client'. No se crean enrollments ni membresías.`,
@@ -276,7 +274,6 @@ export const pedidos: CollectionConfig = {
           const expirationDate = new Date()
           expirationDate.setFullYear(expirationDate.getFullYear() + 1)
 
-          // Procesamos todos los cursos en paralelo
           await Promise.all(
             doc.cursos.map(async (item: any) => {
               let courseId: any
@@ -297,7 +294,7 @@ export const pedidos: CollectionConfig = {
                 },
                 overrideAccess: true,
               })
-              // Si deseas agregar un delay muy corto (por ejemplo, 10ms) entre cada inserción:
+              // Delay opcional muy corto (10ms)
               await new Promise((resolve) => setTimeout(resolve, 10))
             }),
           )
@@ -305,35 +302,34 @@ export const pedidos: CollectionConfig = {
         }
 
         // -------------------------
-        // CREAR REGISTRO DE MEMBRESÍAS
+        // CREAR REGISTRO DE MEMBRESÍAS - Procesar de forma concurrente
         // -------------------------
         if (Array.isArray(doc.membresias) && doc.membresias.length > 0) {
-          for (const item of doc.membresias) {
-            const membershipId =
-              typeof item.membresiaRef === 'object' ? item.membresiaRef?.id : item.membresiaRef
-
-            if (!membershipId) {
+          await Promise.all(
+            doc.membresias.map(async (item: any) => {
+              const membershipId =
+                typeof item.membresiaRef === 'object' ? item.membresiaRef?.id : item.membresiaRef
+              if (!membershipId) {
+                console.log(
+                  `Pedido ${doc.id}: no se encontró un ID de membresía válido en 'membresias'.`,
+                )
+                return
+              }
               console.log(
-                `Pedido ${doc.id}: no se encontró un ID de membresía válido en 'membresias'.`,
+                `Creando registro de membresía para el usuario ${userId}, membresía ${membershipId}.`,
               )
-              continue
-            }
-
-            console.log(
-              `Creando registro de membresía para el usuario ${userId}, membresía ${membershipId}.`,
-            )
-
-            await req.payload.create({
-              collection: 'registro-de-membresias',
-              data: {
-                usuario: userId,
-                tipoDeMembresia: membershipId,
-                estado: 'activo',
-                // La "fechaDeExpiracion" se autocalcula en los hooks de registro-de-membresias
-              },
-              overrideAccess: true,
-            })
-          }
+              await req.payload.create({
+                collection: 'registro-de-membresias',
+                data: {
+                  usuario: userId,
+                  tipoDeMembresia: membershipId,
+                  estado: 'activo',
+                  // La fechaDeExpiracion se autocalcula en los hooks de registro-de-membresias
+                },
+                overrideAccess: true,
+              })
+            }),
+          )
           console.log(`Registro(s) de membresía creados para el pedido ${doc.id}`)
         }
 
