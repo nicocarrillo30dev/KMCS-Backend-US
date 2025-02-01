@@ -81,7 +81,7 @@ export const Enrollment: CollectionConfig = {
               collection: 'enrollment',
               data: {
                 usuario: usuario, // ID del usuario
-                cursos: [cursoId], // Array con un único curso
+                cursos: [cursoId],
                 status: status || 'activo',
                 fechaDeExpiracion: expirationDate.toISOString(), // Formato ISO
               },
