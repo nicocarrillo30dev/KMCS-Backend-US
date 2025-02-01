@@ -6,6 +6,7 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
+import { v4 as uuidv4 } from 'uuid'
 
 import { withCors } from './utils/withCors'
 import { addDataAndFileToRequest } from '@payloadcms/next/utilities'
@@ -207,6 +208,7 @@ export default buildConfig({
         }
       }),
     },
+    // magic
     {
       path: '/validate-cart',
       method: 'post',
@@ -347,6 +349,108 @@ export default buildConfig({
         } catch (error) {
           console.error('Error en /checkout-data:', error)
           return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
+        }
+      }),
+    },
+    {
+      path: '/create-order',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          // Se espera recibir un JSON con:
+          // userData, products, total, discountedTotal, coupon y selectedMethod
+          if (!req.json) {
+            throw new Error('No se pudo obtener el body de la solicitud')
+          }
+          const body = await req.json()
+          const { userData, products, total, discountedTotal, coupon, selectedMethod } = body
+
+          // Genera el pedidoID usando uuidv4
+          const pedidoID = uuidv4()
+
+          // Para cada producto, nos aseguramos de obtener la referencia numérica
+          const cursos = products
+            .filter((p: any) => p.type === 'curso virtual')
+            .map((p: any) => ({
+              cursoRef:
+                typeof p.payloadId !== 'undefined'
+                  ? Number(p.payloadId)
+                  : Number(String(p.id).replace('curso-', '')),
+              price: p.originalPrice,
+              pricewithDiscount: p.discountedPrice,
+              customTotalPrice: null,
+              discountApplied:
+                p.originalPrice !== p.finalPrice ? p.originalPrice - p.finalPrice : null,
+              finalPrice: p.finalPrice,
+            }))
+
+          const talleresPresenciales = products
+            .filter((p: any) => p.type === 'taller presencial')
+            .map((p: any) => ({
+              // Usamos "tallerRef" (como lo espera el endpoint) y nos aseguramos de que sea un número
+              tallerRef:
+                typeof p.payloadId !== 'undefined'
+                  ? Number(p.payloadId)
+                  : Number(String(p.id).replace('taller-', '')),
+              price: p.originalPrice,
+              pricewithDiscount: p.discountedPrice,
+              customTotalPrice: null,
+              discountApplied:
+                p.originalPrice !== p.finalPrice ? p.originalPrice - p.finalPrice : null,
+              finalPrice: p.finalPrice,
+              schedule: null, // Se envía null si no se especifica
+            }))
+
+          const membresias = products
+            .filter((p: any) => p.type === 'membresía')
+            .map((p: any) => ({
+              membresiaRef:
+                typeof p.payloadId !== 'undefined'
+                  ? Number(p.payloadId)
+                  : Number(String(p.id).replace('membresia-', '')),
+              price: p.originalPrice,
+              customTotalPrice: null,
+              discountApplied: null,
+              finalPrice: p.finalPrice,
+            }))
+
+          const activeCouponToSend = discountedTotal ? coupon : null
+          const finalTotal = discountedTotal ?? total
+          const metodoDePago =
+            selectedMethod === 'bankTransfer' ? 'Transferencia Bancaria' : 'Tarjeta de Crédito'
+
+          // Construimos el objeto del pedido (asegúrate de que coincida con el schema de la colección "pedidos")
+          const orderData = {
+            pedidoID,
+            date: new Date().toISOString(),
+            state: 'pendiente',
+            client: userData.id,
+            nombre: userData.nombre,
+            apellidos: userData.apellidos,
+            country: userData.country,
+            phone: userData.phone,
+            payment: metodoDePago,
+            capturaPago: null,
+            activeCoupon: activeCouponToSend,
+            cursos,
+            talleresPresenciales,
+            membresias,
+            totalPrice: finalTotal,
+          }
+
+          // Se hace un cast a any para evitar el error de tipos y se usa el operador ! para req.payload
+          const createdOrder = await req.payload!.create({
+            collection: 'pedidos',
+            data: orderData as any,
+          })
+
+          return Response.json(createdOrder, { status: 200 })
+        } catch (error) {
+          console.error('Error creating order:', error)
+          return Response.json(
+            { error: 'Error interno del servidor al crear el pedido' },
+            { status: 500 },
+          )
         }
       }),
     },
