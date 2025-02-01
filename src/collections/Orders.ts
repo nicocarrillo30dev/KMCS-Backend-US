@@ -238,113 +238,135 @@ export const pedidos: CollectionConfig = {
   ],
 
   hooks: {
-    afterChange: [
-      async (args: any) => {
-        const { doc, req, operation, originalDoc } = args
-
-        // 1. Solo procesar si doc.state es "completado"
-        if (doc.state !== 'completado') {
-          return
+    beforeChange: [
+      async ({ data, req, operation, originalDoc }) => {
+        // Si el nuevo estado NO es "completado", no hacemos nada
+        if (data.state !== 'completado') {
+          return data
         }
 
-        // 2. Si es actualización y ya estaba completado, se omite reprocesar
+        // Si es una actualización y ya estaba completado, no procesamos
         if (operation === 'update' && originalDoc?.state === 'completado') {
-          console.log(
-            `Pedido ${doc.id} ya estaba en estado 'completado'. Se omite reprocesar enrollments.`,
-          )
-          return
+          return data
         }
 
-        // 3. Extraer el ID del usuario (puede venir como objeto o como ID)
-        const userId = typeof doc.client === 'object' ? doc.client?.id : doc.client
+        // Extraer el ID del usuario (puede venir como objeto o como ID)
+        const userId = typeof data.client === 'object' ? data.client?.id : data.client
         if (!userId) {
           console.log(
-            `Pedido ${doc.id} está 'completado' pero no tiene 'client'. No se crean enrollments ni membresías.`,
+            `Pedido (state: completado) sin client. Se omite enrollments y registros de membresía.`,
           )
-          return
+          return data
         }
 
-        // -------------------------
-        // ENROLAR CURSOS - Procesar de forma concurrente con límite
-        // -------------------------
-        if (Array.isArray(doc.cursos) && doc.cursos.length > 0) {
-          const expirationDate = new Date()
-          expirationDate.setFullYear(expirationDate.getFullYear() + 1)
+        // Ejecutar en background las llamadas a las APIs externas
+        setTimeout(async () => {
+          try {
+            // 1. Procesar enrollments de cursos virtuales (solo los que existan)
+            if (Array.isArray(data.cursos) && data.cursos.length > 0) {
+              const expirationDate = new Date()
+              expirationDate.setFullYear(expirationDate.getFullYear() + 1)
 
-          // Usamos p-limit para limitar la concurrencia (por ejemplo, 3 operaciones simultáneas)
-          const limit = pLimit(3)
+              // Limitar la concurrencia (por ejemplo, 3 operaciones simultáneas)
+              const limit = pLimit(3)
+              await Promise.all(
+                data.cursos.map((item: any) =>
+                  limit(async () => {
+                    let courseId: any
+                    if (typeof item.cursoRef === 'object') {
+                      courseId = item.cursoRef.id
+                    } else {
+                      courseId = item.cursoRef
+                    }
+                    console.log(`(Background) Enrolling user ${userId} in course:`, courseId)
 
-          await Promise.all(
-            doc.cursos.map((item: any) =>
-              limit(async () => {
-                let courseId: any
-                if (typeof item.cursoRef === 'object') {
-                  courseId = item.cursoRef.id
-                } else {
-                  courseId = item.cursoRef
-                }
-                console.log(`Enrolling user ${userId} in course:`, courseId)
+                    const enrollmentPayload = {
+                      usuario: userId,
+                      cursos: [courseId],
+                      fechaDeExpiracion: expirationDate.toISOString(),
+                      status: 'activo',
+                    }
 
-                await req.payload.create({
-                  collection: 'enrollment',
-                  data: {
-                    usuario: userId,
-                    cursos: [courseId], // Enrollment individual
-                    fechaDeExpiracion: expirationDate.toISOString(),
-                    status: 'activo',
-                  },
-                  overrideAccess: true,
-                })
-                // Delay opcional muy corto (por ejemplo, 10ms) entre cada inserción
-                await new Promise((resolve) => setTimeout(resolve, 10))
-              }),
-            ),
-          )
-          console.log(`Enrollments created concurrently for pedido ${doc.id}`)
-        }
+                    try {
+                      await fetch('https://admin.nicolascarrillo.com/api/enrollment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(enrollmentPayload),
+                      })
+                    } catch (err) {
+                      console.error(`Error en enrollment para curso ${courseId}:`, err)
+                    }
 
-        // -------------------------
-        // CREAR REGISTRO DE MEMBRESÍAS - Procesar de forma concurrente solo si hay membresías
-        // -------------------------
-        if (Array.isArray(doc.membresias) && doc.membresias.length > 0) {
-          // Puedes limitar la concurrencia aquí también si lo consideras necesario
-          const limitMem = pLimit(3)
-          await Promise.all(
-            doc.membresias.map((item: any) =>
-              limitMem(async () => {
-                const membershipId =
-                  typeof item.membresiaRef === 'object' ? item.membresiaRef?.id : item.membresiaRef
-                if (!membershipId) {
-                  console.log(
-                    `Pedido ${doc.id}: no se encontró un ID de membresía válido en 'membresias'.`,
-                  )
-                  return
-                }
-                console.log(
-                  `Creando registro de membresía para el usuario ${userId}, membresía ${membershipId}.`,
-                )
-                await req.payload.create({
-                  collection: 'registro-de-membresias',
-                  data: {
-                    usuario: userId,
-                    tipoDeMembresia: membershipId,
-                    estado: 'activo',
-                    // La fechaDeExpiracion se autocalcula en los hooks de registro-de-membresias
-                  },
-                  overrideAccess: true,
-                })
-              }),
-            ),
-          )
-          console.log(`Registro(s) de membresía creados para el pedido ${doc.id}`)
-        } else {
-          console.log(
-            `No hay membresías en el pedido ${doc.id}, se omite crear registros de membresía.`,
-          )
-        }
+                    // Delay opcional muy corto (10ms)
+                    await new Promise((resolve) => setTimeout(resolve, 10))
+                  }),
+                ),
+              )
+              console.log(
+                `(Background) Enrollments for courses procesados para pedido ${data.pedidoID}`,
+              )
+            }
 
-        console.log(`Pedido ${doc.id} en 'completado' procesado con éxito.`)
+            // 2. Procesar registros de membresía, si existen
+            if (Array.isArray(data.membresias) && data.membresias.length > 0) {
+              const limitMem = pLimit(3)
+              await Promise.all(
+                data.membresias.map((item: any) =>
+                  limitMem(async () => {
+                    const membershipId =
+                      typeof item.membresiaRef === 'object'
+                        ? item.membresiaRef.id
+                        : item.membresiaRef
+                    if (!membershipId) {
+                      console.log(
+                        `Pedido ${data.pedidoID}: No se encontró un ID válido en membresias.`,
+                      )
+                      return
+                    }
+                    console.log(
+                      `(Background) Creando registro de membresía para el usuario ${userId}, membresía ${membershipId}.`,
+                    )
+
+                    const membershipPayload = {
+                      usuario: userId,
+                      tipoDeMembresia: membershipId,
+                      estado: 'activo',
+                      // Si el endpoint calcula la fecha de expiración, no es necesario enviarla
+                    }
+
+                    try {
+                      await fetch('https://admin.nicolascarrillo.com/api/registro-de-membresias', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(membershipPayload),
+                      })
+                    } catch (err) {
+                      console.error(`Error en registro de membresía para ${membershipId}:`, err)
+                    }
+
+                    await new Promise((resolve) => setTimeout(resolve, 10))
+                  }),
+                ),
+              )
+              console.log(
+                `(Background) Registros de membresía procesados para pedido ${data.pedidoID}`,
+              )
+            } else {
+              console.log(
+                `(Background) No hay membresías en el pedido ${data.pedidoID}, se omite registro de membresía.`,
+              )
+            }
+          } catch (err) {
+            console.error('Error en procesamiento background en beforeChange hook:', err)
+          }
+        }, 0)
+
+        // Devuelve los datos para continuar con la actualización del documento
+        return data
       },
     ],
+    // Puedes mantener también los hooks beforeChange que ya tengas (por ejemplo, el de validación)
   },
 }
