@@ -270,37 +270,38 @@ export const pedidos: CollectionConfig = {
         }
 
         // -------------------------
-        // ENROLAR CURSOS
+        // ENROLAR CURSOS - Procesar de forma concurrente
         // -------------------------
         if (Array.isArray(doc.cursos) && doc.cursos.length > 0) {
           const expirationDate = new Date()
           expirationDate.setFullYear(expirationDate.getFullYear() + 1)
 
-          for (const item of doc.cursos) {
-            let courseId: any
-            if (typeof item.cursoRef === 'object') {
-              courseId = item.cursoRef.id
-            } else {
-              courseId = item.cursoRef
-            }
-            console.log(`Enrolling user ${userId} in course:`, courseId)
+          // Procesamos todos los cursos en paralelo
+          await Promise.all(
+            doc.cursos.map(async (item: any) => {
+              let courseId: any
+              if (typeof item.cursoRef === 'object') {
+                courseId = item.cursoRef.id
+              } else {
+                courseId = item.cursoRef
+              }
+              console.log(`Enrolling user ${userId} in course:`, courseId)
 
-            // Crear enrollment individual para este curso
-            await req.payload.create({
-              collection: 'enrollment',
-              data: {
-                usuario: userId,
-                cursos: [courseId], // Enrollment individual: un solo curso en un array
-                fechaDeExpiracion: expirationDate.toISOString(),
-                status: 'activo',
-              },
-              overrideAccess: true,
-            })
-
-            // Espera 100 ms antes de procesar el siguiente curso
-            await new Promise((resolve) => setTimeout(resolve, 100))
-          }
-          console.log(`Enrollments created individually for pedido ${doc.id}`)
+              await req.payload.create({
+                collection: 'enrollment',
+                data: {
+                  usuario: userId,
+                  cursos: [courseId],
+                  fechaDeExpiracion: expirationDate.toISOString(),
+                  status: 'activo',
+                },
+                overrideAccess: true,
+              })
+              // Si deseas agregar un delay muy corto (por ejemplo, 10ms) entre cada inserción:
+              await new Promise((resolve) => setTimeout(resolve, 10))
+            }),
+          )
+          console.log(`Enrollments created concurrently for pedido ${doc.id}`)
         }
 
         // -------------------------
