@@ -25,6 +25,7 @@
     "date-fns": "^4.1.0",
     "graphql": "^16.8.1",
     "next": "15.1.0",
+    "p-limit": "^6.2.0",
     "payload": "latest",
     "react": "19.0.0",
     "react-dom": "19.0.0",
