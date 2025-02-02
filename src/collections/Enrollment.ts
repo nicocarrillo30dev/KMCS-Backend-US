@@ -49,68 +49,6 @@ export const Enrollment: CollectionConfig = {
     },
   ],
   hooks: {
-    afterChange: [
-      async ({ doc, req, operation }) => {
-        console.log('Hook triggered:', { doc, operation })
-
-        const { usuario, cursos, status, id, processed } = doc
-
-        // Validación inicial
-        if (processed) {
-          console.log(`Document ${id} already processed. Skipping.`)
-          return
-        }
-        if (operation !== 'create') {
-          console.log(`Operation ${operation} is not create. Skipping.`)
-          return
-        }
-        if (!Array.isArray(cursos) || cursos.length <= 1) {
-          console.log(`Courses field is invalid or contains only one course:`, cursos)
-          return
-        }
-
-        try {
-          console.log(`Processing document ${id} with multiple courses:`, cursos)
-
-          const expirationDate = new Date()
-          expirationDate.setFullYear(expirationDate.getFullYear() + 1)
-
-          // Crear inscripciones individuales para cada curso
-          const createPromises = cursos.map(async (cursoId) => {
-            return await req.payload.create({
-              collection: 'enrollment',
-              data: {
-                usuario: usuario, // ID del usuario
-                cursos: [cursoId],
-                status: status || 'activo',
-                fechaDeExpiracion: expirationDate.toISOString(), // Formato ISO
-              },
-              overrideAccess: true,
-            })
-          })
-
-          // Esperar a que todas las inscripciones individuales se creen
-          await Promise.all(createPromises)
-          console.log('Successfully created individual enrollments.')
-
-          // Intentar eliminar el documento original con un retardo
-          console.log(`Scheduling deletion of original document with ID: ${id}`)
-          setTimeout(async () => {
-            try {
-              await req.payload.delete({
-                collection: 'enrollment',
-                id: id,
-              })
-              console.log(`Successfully deleted original document: ${id}`)
-            } catch (deleteError) {
-              console.error(`Error deleting original document ${id}:`, deleteError)
-            }
-          }, 500) // Ajusta el tiempo según sea necesario
-        } catch (error) {
-          console.error(`Error processing enrollments for document ${id}:`, error)
-        }
-      },
-    ],
     beforeChange: [
       async ({ data, req, operation, originalDoc }) => {
         const { usuario, fechaDeExpiracion } = data
