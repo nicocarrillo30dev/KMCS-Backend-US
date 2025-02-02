@@ -95,7 +95,7 @@ export const pedidos: CollectionConfig = {
       required: false,
     },
 
-    // ----------- Cursos Comprados -----------
+    // ----------- Cursos Comprado -----------
     {
       name: 'cursos',
       type: 'array',
