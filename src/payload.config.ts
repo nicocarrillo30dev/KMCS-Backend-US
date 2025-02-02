@@ -42,9 +42,17 @@ export default buildConfig({
   },
   serverURL: 'https://admin.nicolascarrillo.com',
   //serverURL: 'http://localhost:3000',
-  csrf: ['https://www.nicolascarrillo.com'],
+  csrf: [
+    'https://www.nicolascarrillo.com',
+    'http://localhost:3000',
+    'https://server-production-021a.up.railway.app',
+  ],
   cors: {
-    origins: ['https://www.nicolascarrillo.com'],
+    origins: [
+      'https://www.nicolascarrillo.com',
+      'http://localhost:3000',
+      'https://server-production-021a.up.railway.app',
+    ],
     headers: ['Content-Type', 'Authorization'],
   },
   endpoints: [

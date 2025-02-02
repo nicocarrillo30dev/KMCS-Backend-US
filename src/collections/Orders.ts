@@ -238,135 +238,29 @@ export const pedidos: CollectionConfig = {
   ],
 
   hooks: {
-    beforeChange: [
-      async ({ data, req, operation, originalDoc }) => {
-        // Si el nuevo estado NO es "completado", no hacemos nada
-        if (data.state !== 'completado') {
-          return data
+    afterChange: [
+      async ({ doc, req, operation, previousDoc }) => {
+        // Solo procesar si el estado es 'completado'
+        if (doc.state !== 'completado') {
+          return
         }
 
-        // Si es una actualización y ya estaba completado, no procesamos
-        if (operation === 'update' && originalDoc?.state === 'completado') {
-          return data
+        // Evitar reprocesar si ya estaba en 'completado'
+        if (operation === 'update' && previousDoc?.state === 'completado') {
+          return
         }
 
-        // Extraer el ID del usuario (puede venir como objeto o como ID)
-        const userId = typeof data.client === 'object' ? data.client?.id : data.client
-        if (!userId) {
-          console.log(
-            `Pedido (state: completado) sin client. Se omite enrollments y registros de membresía.`,
-          )
-          return data
+        // Llamar al endpoint en el nuevo servidor
+        try {
+          await fetch('https://server-production-021a.up.railway.app/process-completado', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ doc, operation, previousDoc }),
+          })
+        } catch (err) {
+          console.error('Error en fetch a /process-completado:', err)
         }
-
-        // Ejecutar en background las llamadas a las APIs externas
-        setTimeout(async () => {
-          try {
-            // 1. Procesar enrollments de cursos virtuales (solo los que existan)
-            if (Array.isArray(data.cursos) && data.cursos.length > 0) {
-              const expirationDate = new Date()
-              expirationDate.setFullYear(expirationDate.getFullYear() + 1)
-
-              // Limitar la concurrencia (por ejemplo, 3 operaciones simultáneas)
-              const limit = pLimit(3)
-              await Promise.all(
-                data.cursos.map((item: any) =>
-                  limit(async () => {
-                    let courseId: any
-                    if (typeof item.cursoRef === 'object') {
-                      courseId = item.cursoRef.id
-                    } else {
-                      courseId = item.cursoRef
-                    }
-                    console.log(`(Background) Enrolling user ${userId} in course:`, courseId)
-
-                    const enrollmentPayload = {
-                      usuario: userId,
-                      cursos: [courseId],
-                      fechaDeExpiracion: expirationDate.toISOString(),
-                      status: 'activo',
-                    }
-
-                    try {
-                      await fetch('https://admin.nicolascarrillo.com/api/enrollment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify(enrollmentPayload),
-                      })
-                    } catch (err) {
-                      console.error(`Error en enrollment para curso ${courseId}:`, err)
-                    }
-
-                    // Delay opcional muy corto (10ms)
-                    await new Promise((resolve) => setTimeout(resolve, 10))
-                  }),
-                ),
-              )
-              console.log(
-                `(Background) Enrollments for courses procesados para pedido ${data.pedidoID}`,
-              )
-            }
-
-            // 2. Procesar registros de membresía, si existen
-            if (Array.isArray(data.membresias) && data.membresias.length > 0) {
-              const limitMem = pLimit(3)
-              await Promise.all(
-                data.membresias.map((item: any) =>
-                  limitMem(async () => {
-                    const membershipId =
-                      typeof item.membresiaRef === 'object'
-                        ? item.membresiaRef.id
-                        : item.membresiaRef
-                    if (!membershipId) {
-                      console.log(
-                        `Pedido ${data.pedidoID}: No se encontró un ID válido en membresias.`,
-                      )
-                      return
-                    }
-                    console.log(
-                      `(Background) Creando registro de membresía para el usuario ${userId}, membresía ${membershipId}.`,
-                    )
-
-                    const membershipPayload = {
-                      usuario: userId,
-                      tipoDeMembresia: membershipId,
-                      estado: 'activo',
-                      // Si el endpoint calcula la fecha de expiración, no es necesario enviarla
-                    }
-
-                    try {
-                      await fetch('https://admin.nicolascarrillo.com/api/registro-de-membresias', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify(membershipPayload),
-                      })
-                    } catch (err) {
-                      console.error(`Error en registro de membresía para ${membershipId}:`, err)
-                    }
-
-                    await new Promise((resolve) => setTimeout(resolve, 10))
-                  }),
-                ),
-              )
-              console.log(
-                `(Background) Registros de membresía procesados para pedido ${data.pedidoID}`,
-              )
-            } else {
-              console.log(
-                `(Background) No hay membresías en el pedido ${data.pedidoID}, se omite registro de membresía.`,
-              )
-            }
-          } catch (err) {
-            console.error('Error en procesamiento background en beforeChange hook:', err)
-          }
-        }, 0)
-
-        // Devuelve los datos para continuar con la actualización del documento
-        return data
       },
     ],
-    // Puedes mantener también los hooks beforeChange que ya tengas (por ejemplo, el de validación)
   },
 }
