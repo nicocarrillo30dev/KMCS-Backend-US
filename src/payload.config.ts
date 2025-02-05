@@ -261,25 +261,26 @@ export default buildConfig({
 
           // 2. Build validatedCart
           const validatedCart = productArray
-            .map(({ id, type, frontImage }) => {
+            .map(({ payloadId, type, frontImage }) => {
               let foundDoc: any = null
 
               if (type === 'curso virtual') {
                 // find in "cursos"
-                foundDoc = courses.find((c: any) => c.id === id)
+                foundDoc = courses.find((c: any) => c.id === payloadId)
               } else if (type === 'taller presencial') {
                 // find in "talleres-presenciales"
-                foundDoc = talleres.find((t: any) => t.id === id)
+                foundDoc = talleres.find((t: any) => t.id === payloadId)
               } else if (type === 'membresía') {
                 // find in "membresias"
-                foundDoc = membresias.find((m: any) => m.id === id)
+                foundDoc = membresias.find((m: any) => m.id === payloadId)
               } else {
                 // Unknown type
                 return null
               }
 
               if (!foundDoc) {
-                return null // Not found
+                console.log(`Producto no encontrado para payloadId: ${payloadId} y tipo: ${type}`)
+                return null
               }
 
               // 2a. Determine pricing
