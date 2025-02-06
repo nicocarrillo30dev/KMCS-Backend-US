@@ -371,7 +371,15 @@ export default buildConfig({
           // Se espera recibir un JSON con:
           // userData, products, total, discountedTotal, coupon y selectedMethod
           const body = await req.json!() // usamos req.json!() para evitar el error de TS
-          const { userData, products, total, discountedTotal, coupon, selectedMethod } = body
+          const {
+            userData,
+            products,
+            total,
+            discountedTotal,
+            coupon,
+            selectedMethod,
+            capturaPago,
+          } = body
 
           // Genera el pedidoID usando uuidv4
           const pedidoID = uuidv4()
@@ -443,7 +451,7 @@ export default buildConfig({
             country: userData.country,
             phone: userData.phone,
             payment: metodoDePago,
-            capturaPago: null,
+            capturaPago,
             activeCoupon: activeCouponToSend,
             cursos,
             talleresPresenciales,

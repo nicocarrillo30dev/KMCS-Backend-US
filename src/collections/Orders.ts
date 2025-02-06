@@ -1,5 +1,4 @@
 import type { CollectionConfig } from 'payload'
-import pLimit from 'p-limit'
 
 export const pedidos: CollectionConfig = {
   slug: 'pedidos',
