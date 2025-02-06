@@ -11,6 +11,7 @@ export const RegistroDeMembresias: CollectionConfig = {
     create: () => true,
     update: () => true,
   },
+
   fields: [
     {
       name: 'usuario',

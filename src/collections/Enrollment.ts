@@ -70,7 +70,7 @@ export const Enrollment: CollectionConfig = {
           data.status = 'inactivo'
         }
 
-        // Buscar si el usuario tiene una membresía activa
+        // Buscar si el usuario tiene una membresía
         const memberships = await req.payload.find({
           collection: 'registro-de-membresias',
           where: {
