@@ -11,7 +11,7 @@ export const Enrollment: CollectionConfig = {
     cookies: {
       secure: true,
       sameSite: 'None',
-      domain: 'admin.nicolascarrillo.com',
+      domain: '.nicolascarrillo.com',
     },
   },
   fields: [

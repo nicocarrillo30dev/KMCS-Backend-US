@@ -69,7 +69,7 @@ export const Cursos: CollectionConfig = {
     cookies: {
       secure: true,
       sameSite: 'None',
-      domain: 'admin.nicolascarrillo.com',
+      domain: '.nicolascarrillo.com',
     },
   },
   admin: {
