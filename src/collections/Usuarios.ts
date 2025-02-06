@@ -223,6 +223,101 @@ export const Usuarios: CollectionConfig = {
         }
       }),
     },
+    {
+      path: '/tiene-acceso-leccion',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          // (1) Verificar que el usuario esté logueado
+          const userId = req.user?.id
+          if (!userId) {
+            return Response.json(
+              { canAccess: false, reason: 'No autorizado (no hay sesión).' },
+              { status: 401 },
+            )
+          }
+
+          // (2) Leer el parámetro "courseId" de la query (GET /tiene-acceso-leccion?courseId=xxxx)
+          // En vez de usar directamente new URL(req.url),
+          // proveemos una cadena de respaldo.
+          const urlString = req.url ?? 'http://localhost'
+
+          // Si req.url a veces viene como "/ruta?foo=bar",
+          // entonces conviene usar 'http://localhost' como segundo parámetro:
+          const url = new URL(urlString, 'http://localhost')
+
+          // Ahora sí podemos hacer:
+          const cursoId = url.searchParams.get('cursoId')
+          const courseIdParam = url.searchParams.get('courseId')
+          if (!courseIdParam) {
+            return Response.json(
+              { canAccess: false, reason: 'Falta el parámetro courseId.' },
+              { status: 400 },
+            )
+          }
+
+          const courseId = Number(courseIdParam)
+          if (isNaN(courseId)) {
+            return Response.json(
+              { canAccess: false, reason: 'courseId no es un número válido.' },
+              { status: 400 },
+            )
+          }
+
+          // (3) Revisar si el usuario tiene una membresía activa
+          const now = new Date()
+          const membershipsResult = await req.payload.find({
+            collection: 'registro-de-membresias', // Ajusta tu colección
+            where: {
+              usuario: { equals: userId },
+            },
+            depth: 0,
+            overrideAccess: true,
+          })
+          const memDocs = membershipsResult.docs || []
+          const activeMembership = memDocs.find(
+            (m) => m.estado === 'activo' && new Date(m.fechaDeExpiracion) > now,
+          )
+          // Si tu membresía da acceso universal a todos los cursos:
+          if (activeMembership) {
+            return Response.json({ canAccess: true, reason: 'Membresía activa' })
+          }
+
+          // (4) Si no hay membresía activa, chequear enrollment
+          //     Colección "enrollment" con campos: { usuario, cursos: number[], status, fechaDeExpiracion }
+          const enrollmentResult = await req.payload.find({
+            collection: 'enrollment',
+            where: {
+              usuario: { equals: userId },
+              status: { equals: 'activo' }, // status activo
+              cursos: { contains: courseId }, // que "cursos" contenga courseId
+            },
+            depth: 0,
+            overrideAccess: true,
+          })
+
+          const enrollmentDocs = enrollmentResult.docs || []
+          // Revisamos si alguno no ha expirado
+          const hasValidEnrollment = enrollmentDocs.some((enr) => {
+            const expDate = new Date(enr.fechaDeExpiracion)
+            return expDate > now // no expirado
+          })
+
+          if (hasValidEnrollment) {
+            return Response.json({ canAccess: true, reason: 'Curso enrolado activo' })
+          }
+
+          // (5) Si no hay membresía activa ni enrolamiento activo => no hay acceso
+          return Response.json({ canAccess: false, reason: 'Sin acceso' })
+        } catch (err) {
+          console.error('Error en /tiene-acceso-leccion:', err)
+          return Response.json(
+            { canAccess: false, reason: 'Error interno del servidor' },
+            { status: 500 },
+          )
+        }
+      }),
+    },
   ],
   access: {
     read: () => true,
