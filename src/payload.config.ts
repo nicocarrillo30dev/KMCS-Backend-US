@@ -1320,6 +1320,86 @@ export default buildConfig({
         }
       }),
     },
+    {
+      path: '/validate-lesson',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          // 1) Parsear el cursoId desde la query string
+          const urlString = req.url || 'http://localhost'
+          const url = new URL(urlString, 'http://localhost')
+          const cursoId = url.searchParams.get('cursoId')
+
+          if (!cursoId) {
+            return Response.json({ error: 'Falta el parámetro "cursoId"' }, { status: 400 })
+          }
+
+          // 2) Llamar a /usuarios/me para verificar la sesión y obtener userId
+          //    Pasamos la cookie entrante para que Payload reconozca la sesión
+          const cookie = req.headers.get('cookie') || ''
+          const meRes = await fetch('https://admin.nicolascarrillo.com/api/usuarios/me', {
+            method: 'GET',
+            headers: { Cookie: cookie },
+          })
+
+          if (!meRes.ok) {
+            // No hay sesión válida
+            return Response.json(
+              { error: 'No estás autorizado o la sesión expiró' },
+              { status: 401 },
+            )
+          }
+
+          const meData = await meRes.json()
+          const userId = meData?.user?.id
+          if (!userId) {
+            // Respuesta de /me no contenía usuario
+            return Response.json({ error: 'No estás autorizado' }, { status: 401 })
+          }
+
+          // 3) Buscar en "enrollment" con depth=0:
+          //    - usuario = userId
+          //    - cursos contiene cursoId
+          const enrollmentUrl = `https://admin.nicolascarrillo.com/api/enrollment?depth=0&where[usuario][equals]=${userId}&where[cursos][in]=${cursoId}`
+          const enrollmentRes = await fetch(enrollmentUrl, {
+            method: 'GET',
+            headers: { Cookie: cookie },
+          })
+
+          if (!enrollmentRes.ok) {
+            return Response.json(
+              { error: 'Error interno al consultar enrollment' },
+              { status: 500 },
+            )
+          }
+
+          const enrollmentData = await enrollmentRes.json()
+          const docs = Array.isArray(enrollmentData.docs) ? enrollmentData.docs : []
+
+          // 4) Validar si hay un doc con status = "activo" y fechaDeExpiracion futura
+          const now = new Date()
+          const hasAccess = docs.some((doc: any) => {
+            if (doc.status !== 'activo') return false
+            if (!doc.fechaDeExpiracion) return false
+            return new Date(doc.fechaDeExpiracion) > now
+          })
+
+          if (!hasAccess) {
+            // No se encontró un enrollment activo/no vencido para este curso
+            return Response.json(
+              { error: 'No tienes acceso a este curso', hasAccess: false },
+              { status: 403 },
+            )
+          }
+
+          // 5) Todo OK => devolver hasAccess = true
+          return Response.json({ hasAccess: true }, { status: 200 })
+        } catch (error: any) {
+          console.error('Error en /validate-lesson:', error)
+          return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
+        }
+      }),
+    },
   ],
 
   collections: [

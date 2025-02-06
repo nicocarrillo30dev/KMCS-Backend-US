@@ -6,7 +6,6 @@ const enrollNewUser: CollectionAfterChangeHook = async ({ doc, operation, req })
   if (operation === 'create') {
     const defaultCourses = [41330, 39826] // IDs de cursos
 
-    // Esperamos un pequeño tiempo para asegurar que el usuario exista en la DB
     setTimeout(async () => {
       try {
         for (const cursoId of defaultCourses) {
