@@ -202,7 +202,7 @@ export const Usuarios: CollectionConfig = {
             where: {
               usuario: { equals: userId },
             },
-            depth: 0,
+            depth: 1,
             limit: 50,
             overrideAccess: true,
           })
