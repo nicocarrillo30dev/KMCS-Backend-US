@@ -3,7 +3,7 @@ import type { CollectionConfig } from 'payload'
 export const Enrollment: CollectionConfig = {
   slug: 'enrollment',
   access: {
-    read: () => true, // Allow public read access
+    read: () => true, // Allow public read
     create: () => true,
     update: () => true,
   },
