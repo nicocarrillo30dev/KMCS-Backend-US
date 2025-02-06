@@ -184,6 +184,46 @@ export const Usuarios: CollectionConfig = {
         }
       }),
     },
+
+    {
+      path: '/mi-membresia',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          // 1) Verificar que el usuario esté logueado
+          const userId = req.user?.id
+          if (!userId) {
+            return Response.json({ error: 'No autorizado' }, { status: 401 })
+          }
+
+          // 2) Obtener todas las membresías de este usuario
+          const membershipsResult = await req.payload.find({
+            collection: 'registro-de-membresias',
+            where: {
+              usuario: { equals: userId },
+            },
+            depth: 0,
+            limit: 50,
+            overrideAccess: true,
+          })
+
+          const memDocs = membershipsResult.docs || []
+          const now = new Date()
+          const activeMembership = memDocs.find(
+            (m) => m.estado === 'activo' && new Date(m.fechaDeExpiracion) > now,
+          )
+
+          // 4) Responder con la lista de membresías y la activa
+          return Response.json({
+            memberships: memDocs,
+            activeMembership: activeMembership || null,
+          })
+        } catch (err: any) {
+          console.error('Error en /mi-membresia:', err)
+          return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
+        }
+      }),
+    },
   ],
   access: {
     read: () => true,
