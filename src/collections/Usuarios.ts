@@ -235,7 +235,13 @@ export const Usuarios: CollectionConfig = {
   hooks: {
     afterChange: [enrollNewUser],
   },
-  auth: {},
+  auth: {
+    cookies: {
+      secure: true,
+      sameSite: 'None',
+      domain: 'admin.nicolascarrillo.com',
+    },
+  },
 
   fields: [
     {

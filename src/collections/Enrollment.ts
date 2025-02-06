@@ -7,6 +7,13 @@ export const Enrollment: CollectionConfig = {
     create: () => true,
     update: () => true,
   },
+  auth: {
+    cookies: {
+      secure: true,
+      sameSite: 'None',
+      domain: 'admin.nicolascarrillo.com',
+    },
+  },
   fields: [
     {
       name: 'usuario', // Relación con la colección "usuarios"

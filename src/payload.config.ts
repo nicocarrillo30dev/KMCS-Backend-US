@@ -40,6 +40,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
+
   serverURL: 'https://admin.nicolascarrillo.com',
   //serverURL: 'http://localhost:3000',
   csrf: [
@@ -47,6 +48,7 @@ export default buildConfig({
     'http://localhost:3000',
     'https://server-production-021a.up.railway.app',
   ],
+
   cors: {
     origins: [
       'https://www.nicolascarrillo.com',
