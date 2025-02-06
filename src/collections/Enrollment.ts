@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { isBefore, addYears } from 'date-fns'
 
 export const Enrollment: CollectionConfig = {
   slug: 'enrollment',
@@ -58,49 +59,102 @@ export const Enrollment: CollectionConfig = {
           throw new Error('El usuario es obligatorio para crear o actualizar un enrollment.')
         }
 
-        const today = new Date()
+        const now = new Date()
+        // Tomamos la fecha enviada o, si no viene, 1 año desde hoy
         let expirationDate = fechaDeExpiracion
           ? new Date(fechaDeExpiracion)
-          : new Date(today.setFullYear(today.getFullYear() + 1))
+          : new Date(now.setFullYear(now.getFullYear() + 1))
 
-        // Si la fecha de expiración es menor a la fecha actual, cambiar el estado a "inactivo"
-        if (expirationDate < today) {
-          console.log(
-            `Course enrollment has expired. Setting status to "inactivo" for user ${usuario}.`,
-          )
+        // Si la fecha de expiración ya pasó, poner status "inactivo"
+        if (isBefore(expirationDate, now)) {
+          console.log(`Este enrollment ha expirado. Se marca como "inactivo".`)
           data.status = 'inactivo'
         }
 
-        // Buscar si el usuario tiene una membresía
-        const memberships = await req.payload.find({
+        // 1. Buscar si el usuario tiene al menos UNA membresía activa
+        //    (asumes que la última es la que vale o con la fecha de expiración más lejana)
+        const membershipsRes = await req.payload.find({
           collection: 'registro-de-membresias',
           where: {
             usuario: { equals: usuario },
             estado: { equals: 'activo' },
           },
+          // Podrías ordenar por fechaDeExpiracion desc si manejas varias
+          sort: '-fechaDeExpiracion',
           limit: 1,
+          depth: 0, // así viene sólo la relación ID
         })
+        const hasActiveMembership = membershipsRes.docs.length > 0
 
-        const hasActiveMembership = memberships.docs.length > 0
-
-        // Verificar si la fecha fue modificada manualmente
+        // 2. Verificar si la fecha fue modificada manualmente (durante un "update")
         const manualUpdate =
           operation === 'update' && originalDoc?.fechaDeExpiracion !== fechaDeExpiracion
 
-        // Si el usuario tiene una membresía activa y la fecha no fue modificada manualmente
+        // 3. Si el usuario tiene membresía activa y NO se cambió la fecha manualmente:
         if (hasActiveMembership && !manualUpdate) {
-          if (expirationDate < today) {
-            expirationDate = new Date()
-            expirationDate.setFullYear(today.getFullYear() + 1)
+          // Tomamos la membresía activa (la primera de la búsqueda)
+          const activeMembership = membershipsRes.docs[0]
+
+          // 3.1 Obtenemos la 'Cantidad' desde la colección 'membresias'
+          //     (activeMembership.tipoDeMembresia es un ID o un obj, dependiendo de tu config)
+          const membershipTypeId =
+            typeof activeMembership.tipoDeMembresia === 'object'
+              ? activeMembership.tipoDeMembresia.id
+              : activeMembership.tipoDeMembresia
+
+          // Vamos a buscar el documento real en la colección "membresias"
+          const membershipType = await req.payload.findByID({
+            collection: 'membresias',
+            id: membershipTypeId,
+            depth: 0,
+          })
+
+          const maxCourses = membershipType?.Cantidad ?? 0
+
+          // 3.2. Contar cuántos enrollments activos tiene el usuario AHORA
+          const enrollmentsActive = await req.payload.find({
+            collection: 'enrollment',
+            where: {
+              usuario: { equals: usuario },
+              status: { equals: 'activo' },
+            },
+            limit: 0, // para contar todos, sin límite
+            depth: 0,
+          })
+          const totalActiveCourses = enrollmentsActive.totalDocs // O docs.length
+
+          // 3.3. Si NO ha superado el límite, entonces se extiende la fecha
+          if (totalActiveCourses < maxCourses) {
+            console.log(
+              `Usuario todavía bajo el límite de cursos (${totalActiveCourses}/${maxCourses}). Se extiende +1 año`,
+            )
+            // Si la fecha que traía ya caducó, la ponemos a 1 año desde HOY
+            if (isBefore(expirationDate, now)) {
+              expirationDate = new Date()
+              expirationDate.setFullYear(now.getFullYear() + 1)
+            } else {
+              // Sumar un año a la fecha actual del enrollment
+              expirationDate.setFullYear(expirationDate.getFullYear() + 1)
+            }
+            data.fechaDeExpiracion = expirationDate.toISOString()
           } else {
-            expirationDate.setFullYear(expirationDate.getFullYear() + 1)
+            // 3.4. El usuario YA alcanzó (o superó) el número de cursos permitidos
+            console.log(
+              `Usuario ha alcanzado o superado el límite de cursos (${totalActiveCourses}/${maxCourses}). NO se extiende.`,
+            )
+            // Aquí simplemente dejas la fecha que venía.
+            // O podrías poner una fecha corta, o un error, etc.
           }
-          data.fechaDeExpiracion = expirationDate.toISOString()
-        } else if (!hasActiveMembership && !manualUpdate && expirationDate < today) {
+        } else if (!hasActiveMembership && !manualUpdate && isBefore(expirationDate, now)) {
+          // No tiene membresía activa, y está intentando poner
+          // una fecha de expiración en el pasado
           throw new Error(
             'No puedes establecer una fecha de expiración en el pasado sin una membresía activa.',
           )
         }
+
+        // No olvides asignar "data.fechaDeExpiracion" al final
+        // si le hiciste cambios
       },
     ],
   },
