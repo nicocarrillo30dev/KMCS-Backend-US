@@ -65,13 +65,7 @@ export const Cursos: CollectionConfig = {
     update: () => true,
     delete: () => true,
   },
-  auth: {
-    cookies: {
-      secure: true,
-      sameSite: 'None',
-      domain: '.nicolascarrillo.com',
-    },
-  },
+
   admin: {
     defaultColumns: ['id', 'title', 'precio', 'categorias', 'estado', 'coverImage'],
     useAsTitle: 'title',
