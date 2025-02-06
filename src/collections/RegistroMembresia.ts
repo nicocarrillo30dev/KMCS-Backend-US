@@ -54,6 +54,40 @@ export const RegistroDeMembresias: CollectionConfig = {
   ],
 
   hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (operation === 'create') {
+          const { usuario } = data
+
+          // Buscar la membresía activa de ese usuario
+          const activeMembership = await req.payload.find({
+            collection: 'registro-de-membresias',
+            where: {
+              usuario: { equals: usuario },
+              estado: { equals: 'activo' },
+            },
+            sort: '-fechaDeExpiracion',
+            limit: 1,
+          })
+
+          let newExpirationDate
+
+          if (activeMembership.docs.length > 0) {
+            // Extiende un año desde la expiración de la membresía activa
+            const currentExpirationDate = new Date(activeMembership.docs[0].fechaDeExpiracion)
+            newExpirationDate = addYears(currentExpirationDate, 1)
+          } else {
+            // Si no hay membresía activa, un año desde hoy
+            newExpirationDate = addYears(new Date(), 1)
+          }
+
+          // Actualiza el campo fechaDeExpiracion
+          data.fechaDeExpiracion = newExpirationDate.toISOString()
+        }
+
+        return data
+      },
+    ],
     afterChange: [
       async ({ doc, req, operation }) => {
         try {
