@@ -461,7 +461,7 @@ export default buildConfig({
               discountApplied:
                 p.originalPrice !== p.finalPrice ? p.originalPrice - p.finalPrice : null,
               finalPrice: p.finalPrice,
-              schedule: null, // Se envía null si no se especifica
+              schedule: p.schedule || null,
             }))
 
           const membresias = products
