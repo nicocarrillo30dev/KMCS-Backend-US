@@ -292,6 +292,7 @@ export interface Enrollment {
     | {
         lessonSlug?: string | null;
         completedAt?: string | null;
+        toggleLesson?: boolean | null;
         id?: string | null;
       }[]
     | null;
@@ -903,6 +904,7 @@ export interface EnrollmentSelect<T extends boolean = true> {
     | {
         lessonSlug?: T;
         completedAt?: T;
+        toggleLesson?: T;
         id?: T;
       };
   updatedAt?: T;

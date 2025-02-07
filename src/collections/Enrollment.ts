@@ -71,6 +71,12 @@ export const Enrollment: CollectionConfig = {
             },
           },
         },
+        {
+          name: 'toggleLesson',
+          type: 'checkbox',
+          label: 'Lección Completada',
+          defaultValue: false,
+        },
       ],
     },
   ],
