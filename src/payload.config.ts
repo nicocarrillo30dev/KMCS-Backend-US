@@ -234,7 +234,7 @@ export default buildConfig({
             return Response.json({ error: 'No se enviaron productos' }, { status: 400 })
           }
 
-          // 1. Fetch each collection
+          // 1. Fetch colecciones
           const resCursos = await fetch(`${req.payload.config.serverURL}/api/cursos?limit=150`)
           if (!resCursos.ok) {
             return Response.json({ error: 'Error interno al obtener cursos' }, { status: 500 })
@@ -261,33 +261,32 @@ export default buildConfig({
           const dataMembresias = await resMembresias.json()
           const membresias = dataMembresias.docs || dataMembresias
 
-          // 2. Build validatedCart
+          // 2. Recorremos el "productArray" para validar
           const validatedCart = productArray
-            .map(({ payloadId, type, frontImage }) => {
-              let foundDoc: any = null
+            .map((clientItem) => {
+              const { payloadId, type, frontImage } = clientItem
+
+              let foundDoc = null
 
               if (type === 'curso virtual') {
-                // find in "cursos"
                 foundDoc = courses.find((c: any) => c.id === payloadId)
               } else if (type === 'taller presencial') {
-                // find in "talleres-presenciales"
                 foundDoc = talleres.find((t: any) => t.id === payloadId)
               } else if (type === 'membresía') {
-                // find in "membresias"
                 foundDoc = membresias.find((m: any) => m.id === payloadId)
               } else {
-                // Unknown type
+                // Tipo desconocido
                 return null
               }
 
               if (!foundDoc) {
-                console.log(`Producto no encontrado para payloadId: ${payloadId} y tipo: ${type}`)
+                console.log(`Producto no encontrado: payloadId=${payloadId}, tipo=${type}`)
                 return null
               }
 
-              // 2a. Determine pricing
+              // 2a. Precios
               let originalPrice = 0
-              let discountedPrice: number | null = null
+              let discountedPrice = null
 
               if (type === 'curso virtual') {
                 originalPrice = foundDoc.precio || 0
@@ -301,36 +300,72 @@ export default buildConfig({
               const membershipDiscountPrice = null
               const finalPrice = discountedPrice ?? originalPrice
 
-              // 2b. Determine finalImage
-              // For courses/talleres, if doc has an upload with .SupaURL, use that.
-              // Otherwise fallback to frontImage.
-              let finalImage: string | null = null
+              // 2b. Imagen final
+              let finalImage = null
               if (foundDoc.coverImage && foundDoc.coverImage.SupaURL) {
                 finalImage = foundDoc.coverImage.SupaURL
               } else {
                 finalImage = frontImage || null
               }
 
-              // 2c. Return the validated product
+              // 2c. Si es taller, validamos el grupo seleccionado
+              const selectedGroupId = clientItem.selectedGroupId || null
+              let selectedGroupHorario = clientItem.selectedGroupHorario || null
+              let selectedGroupFechas = clientItem.selectedGroupFechas || []
+
+              if (type === 'taller presencial' && selectedGroupId) {
+                // Buscar el grupo real en foundDoc.gruposDeFechas
+                const foundGroup = foundDoc.gruposDeFechas?.find(
+                  (g: any) => g.id === selectedGroupId,
+                )
+
+                if (!foundGroup) {
+                  // Si no existe, devolvemos null o forzamos error
+                  console.log(
+                    `No existe el grupo con id=${selectedGroupId} para el taller=${payloadId}`,
+                  )
+                  return null
+                }
+
+                // Podrías sobreescribir la info con la real del backend
+                selectedGroupHorario = foundGroup.horario
+                selectedGroupFechas = foundGroup.fechas // array con { id, fechaClase }
+
+                // Si quieres validar vacantes aquí, hazlo:
+                // if (Number(foundGroup.vacantes) <= 0) {
+                //   console.log(`El grupo ${selectedGroupId} no tiene vacantes`);
+                //   return null;
+                // }
+              }
+
+              // Construimos objeto final validado
               return {
+                // ID del documento en la BD
                 id: foundDoc.id,
-                type, // might want to keep it
+                type,
                 title: foundDoc.title || foundDoc.nombre || 'Sin título',
                 coverImage: finalImage,
+
+                // Precios
                 originalPrice,
                 discountedPrice,
                 membershipDiscountPrice,
                 finalPrice,
+
+                // Info extra (si es taller, ya viene "limpia" del backend)
+                selectedGroupId,
+                selectedGroupHorario,
+                selectedGroupFechas,
               }
             })
-            .filter(Boolean)
+            .filter(Boolean) // Quitar nulos
 
-          // 3. Store in ephemeral memory
+          // 3. Guardar en memoria efímera
           const cartId = Math.random().toString(36).substring(2, 12)
           ephemeralCartsStore[cartId] = validatedCart
 
-          // 4. Return success + set cartId cookie
-          return new Response(JSON.stringify({ success: true }), {
+          // 4. Responder
+          return new Response(JSON.stringify({ success: true, validatedCart }), {
             status: 200,
             headers: {
               'Content-Type': 'application/json',
@@ -627,7 +662,7 @@ export default buildConfig({
 
           // 2. Fetch orders (pedidos) for that userId, depth=0
           const ordersResult = await req.payload.find({
-            collection: 'pedidos', // Adjust if your collection is named differently
+            collection: 'pedidos',
             where: {
               client: { equals: numericUserId },
             },
@@ -635,7 +670,7 @@ export default buildConfig({
             pagination: false,
           })
 
-          const orders = ordersResult.docs // array of orders
+          const orders = ordersResult.docs
 
           // 3. Collect numeric IDs from each array in the orders:
           const allCourseIDs = new Set<number>()
