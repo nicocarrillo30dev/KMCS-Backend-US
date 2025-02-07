@@ -264,10 +264,23 @@ export default buildConfig({
           // 2. Recorremos el "productArray" para validar
           const validatedCart = productArray
             .map((clientItem) => {
-              const { payloadId, type, frontImage } = clientItem
+              // Desestructuramos con "let" y renombramos para poder reasignar
+              const {
+                payloadId,
+                type,
+                frontImage,
+                selectedGroupId: localSelectedGroupId,
+              } = clientItem
+
+              // 2) Desestructurar con LET las que SÍ se reasignan
+              let {
+                selectedGroupHorario: localSelectedGroupHorario,
+                selectedGroupFechas: localSelectedGroupFechas,
+              } = clientItem
 
               let foundDoc = null
 
+              // 2a. Identificamos cuál colección buscar
               if (type === 'curso virtual') {
                 foundDoc = courses.find((c: any) => c.id === payloadId)
               } else if (type === 'taller presencial') {
@@ -284,7 +297,7 @@ export default buildConfig({
                 return null
               }
 
-              // 2a. Precios
+              // 2b. Precios
               let originalPrice = 0
               let discountedPrice = null
 
@@ -300,7 +313,7 @@ export default buildConfig({
               const membershipDiscountPrice = null
               const finalPrice = discountedPrice ?? originalPrice
 
-              // 2b. Imagen final
+              // 2c. Imagen final
               let finalImage = null
               if (foundDoc.coverImage && foundDoc.coverImage.SupaURL) {
                 finalImage = foundDoc.coverImage.SupaURL
@@ -308,37 +321,31 @@ export default buildConfig({
                 finalImage = frontImage || null
               }
 
-              // 2c. Si es taller, validamos el grupo seleccionado
-              const selectedGroupId = clientItem.selectedGroupId || null
-              let selectedGroupHorario = clientItem.selectedGroupHorario || null
-              let selectedGroupFechas = clientItem.selectedGroupFechas || []
-
-              if (type === 'taller presencial' && selectedGroupId) {
-                // Buscar el grupo real en foundDoc.gruposDeFechas
+              // 2d. Validamos taller presencial con el grupo seleccionado
+              if (type === 'taller presencial' && localSelectedGroupId) {
                 const foundGroup = foundDoc.gruposDeFechas?.find(
-                  (g: any) => g.id === selectedGroupId,
+                  (g: any) => g.id === localSelectedGroupId,
                 )
 
                 if (!foundGroup) {
-                  // Si no existe, devolvemos null o forzamos error
                   console.log(
-                    `No existe el grupo con id=${selectedGroupId} para el taller=${payloadId}`,
+                    `No existe el grupo con id=${localSelectedGroupId} para el taller=${payloadId}`,
                   )
                   return null
                 }
 
-                // Podrías sobreescribir la info con la real del backend
-                selectedGroupHorario = foundGroup.horario
-                selectedGroupFechas = foundGroup.fechas // array con { id, fechaClase }
+                // Sobrescribimos con la data real del backend
+                localSelectedGroupHorario = foundGroup.horario
+                localSelectedGroupFechas = foundGroup.fechas
 
-                // Si quieres validar vacantes aquí, hazlo:
+                // // Ejemplo de validación de vacantes:
                 // if (Number(foundGroup.vacantes) <= 0) {
-                //   console.log(`El grupo ${selectedGroupId} no tiene vacantes`);
+                //   console.log(`El grupo ${localSelectedGroupId} no tiene vacantes`);
                 //   return null;
                 // }
               }
 
-              // Construimos objeto final validado
+              // 2e. Construimos objeto final validado
               return {
                 // ID del documento en la BD
                 id: foundDoc.id,
@@ -352,10 +359,10 @@ export default buildConfig({
                 membershipDiscountPrice,
                 finalPrice,
 
-                // Info extra (si es taller, ya viene "limpia" del backend)
-                selectedGroupId,
-                selectedGroupHorario,
-                selectedGroupFechas,
+                // Info extra (taller presencial, etc.)
+                selectedGroupId: localSelectedGroupId,
+                selectedGroupHorario: localSelectedGroupHorario,
+                selectedGroupFechas: localSelectedGroupFechas,
               }
             })
             .filter(Boolean) // Quitar nulos
