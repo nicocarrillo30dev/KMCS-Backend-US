@@ -288,6 +288,13 @@ export interface Enrollment {
   cursos: (number | Curso)[];
   status: 'activo' | 'inactivo';
   fechaDeExpiracion: string;
+  completedLessons?:
+    | {
+        lessonSlug?: string | null;
+        completedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -891,6 +898,13 @@ export interface EnrollmentSelect<T extends boolean = true> {
   cursos?: T;
   status?: T;
   fechaDeExpiracion?: T;
+  completedLessons?:
+    | T
+    | {
+        lessonSlug?: T;
+        completedAt?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

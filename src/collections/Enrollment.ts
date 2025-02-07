@@ -49,6 +49,30 @@ export const Enrollment: CollectionConfig = {
         return date.toISOString()
       },
     },
+    {
+      name: 'completedLessons',
+      type: 'array',
+      label: 'Lecciones Completadas',
+      fields: [
+        {
+          name: 'lessonSlug',
+          label: 'Slug de la Lección',
+          type: 'text',
+          required: false,
+        },
+        {
+          name: 'completedAt',
+          label: 'Fecha',
+          type: 'date',
+          required: false,
+          admin: {
+            date: {
+              displayFormat: 'dd/MM/yyyy',
+            },
+          },
+        },
+      ],
+    },
   ],
   hooks: {
     beforeChange: [
@@ -152,9 +176,6 @@ export const Enrollment: CollectionConfig = {
             'No puedes establecer una fecha de expiración en el pasado sin una membresía activa.',
           )
         }
-
-        // No olvides asignar "data.fechaDeExpiracion" al final
-        // si le hiciste cambios
       },
     ],
   },
