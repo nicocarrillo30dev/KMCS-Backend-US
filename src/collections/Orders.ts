@@ -127,7 +127,12 @@ export const pedidos: CollectionConfig = {
         {
           name: 'discountApplied',
           type: 'number',
-          label: 'Descuento Aplicado (Por Cupón o Membresía)',
+          label: 'Descuento Aplicado por Membresía',
+        },
+        {
+          name: 'discountCoupon',
+          type: 'number',
+          label: 'Descuento por Cupón',
         },
         {
           name: 'finalPrice',
@@ -167,7 +172,7 @@ export const pedidos: CollectionConfig = {
         {
           name: 'discountApplied',
           type: 'number',
-          label: 'Descuento Aplicado (Por Cupón o Membresía)',
+          label: 'Descuento Aplicado (Por Cupón)',
         },
         {
           name: 'finalPrice',
@@ -212,7 +217,7 @@ export const pedidos: CollectionConfig = {
         {
           name: 'discountApplied',
           type: 'number',
-          label: 'Descuento Aplicado (Por Cupón o Membresía)',
+          label: 'Descuento Aplicado (Por Cupón)',
         },
         {
           name: 'finalPrice',

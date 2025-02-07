@@ -467,6 +467,7 @@ export interface Pedido {
         pricewithDiscount?: number | null;
         customTotalPrice?: number | null;
         discountApplied?: number | null;
+        discountCoupon?: number | null;
         /**
          * Precio final después de aplicar descuentos y/o edición manual
          */
@@ -988,6 +989,7 @@ export interface PedidosSelect<T extends boolean = true> {
         pricewithDiscount?: T;
         customTotalPrice?: T;
         discountApplied?: T;
+        discountCoupon?: T;
         finalPrice?: T;
         id?: T;
       };
