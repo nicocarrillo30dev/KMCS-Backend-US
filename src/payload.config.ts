@@ -19,6 +19,7 @@ import { Enrollment } from './collections/Enrollment'
 import { FotosPreguntas } from './collections/FotosPreguntas'
 import { FotosUsuarios } from './collections/FotosUsuarios'
 import { Imagenes } from './collections/Imagenes'
+import { ImagenesReviews } from './collections/ImagenesReviews'
 import { Membresias } from './collections/Membership'
 import { pedidos } from './collections/Orders'
 import PreguntasRespuestas from './collections/PreguntasAlumnos'
@@ -1463,6 +1464,7 @@ export default buildConfig({
     FotosPreguntas,
     FotosUsuarios,
     Imagenes,
+    ImagenesReviews,
     Membresias,
     pedidos,
     PreguntasRespuestas,
@@ -1497,6 +1499,9 @@ export default buildConfig({
         },
         fotosPreguntas: {
           prefix: 'fotos-preguntas',
+        },
+        'imagenes-reviews': {
+          prefix: 'imagenes-reviews',
         },
       },
       bucket: process.env.S3_BUCKET as string,

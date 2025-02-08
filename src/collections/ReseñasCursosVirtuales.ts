@@ -68,7 +68,7 @@ const ReviewsCursosVirtuales: CollectionConfig = {
       name: 'fecha',
       type: 'date',
       required: true,
-      defaultValue: () => new Date().toISOString().split('T')[0], // Default: hoy
+      defaultValue: () => new Date().toISOString().split('T')[0],
       admin: {
         position: 'sidebar',
         date: {
@@ -94,6 +94,23 @@ const ReviewsCursosVirtuales: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
+    },
+    {
+      name: 'imagenesReviews',
+      labels: {
+        singular: 'Imagen Reseña',
+        plural: 'Imágenes Reseñas',
+      },
+      type: 'array',
+      fields: [
+        {
+          name: 'imagenReview',
+          label: 'Imagen Review',
+          type: 'upload',
+          relationTo: 'imagenes-reviews',
+          maxDepth: 1,
+        },
+      ],
     },
   ],
   hooks: {

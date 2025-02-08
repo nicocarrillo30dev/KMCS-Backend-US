@@ -19,6 +19,7 @@ export interface Config {
     fotosPreguntas: FotosPregunta;
     fotosUsuarios: FotosUsuario;
     imagenes: Imagene;
+    'imagenes-reviews': ImagenesReview;
     membresias: Membresia;
     pedidos: Pedido;
     preguntasRespuestas: PreguntasRespuesta;
@@ -41,6 +42,7 @@ export interface Config {
     fotosPreguntas: FotosPreguntasSelect<false> | FotosPreguntasSelect<true>;
     fotosUsuarios: FotosUsuariosSelect<false> | FotosUsuariosSelect<true>;
     imagenes: ImagenesSelect<false> | ImagenesSelect<true>;
+    'imagenes-reviews': ImagenesReviewsSelect<false> | ImagenesReviewsSelect<true>;
     membresias: MembresiasSelect<false> | MembresiasSelect<true>;
     pedidos: PedidosSelect<false> | PedidosSelect<true>;
     preguntasRespuestas: PreguntasRespuestasSelect<false> | PreguntasRespuestasSelect<true>;
@@ -433,6 +435,26 @@ export interface FotosPregunta {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "imagenes-reviews".
+ */
+export interface ImagenesReview {
+  id: number;
+  SupaURL?: string | null;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "membresias".
  */
 export interface Membresia {
@@ -650,6 +672,12 @@ export interface ReviewsCursosVirtuale {
   reseña: string;
   fecha: string;
   estado: 'aceptada' | 'denegada';
+  imagenesReviews?:
+    | {
+        imagenReview?: (number | null) | ImagenesReview;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -708,6 +736,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'imagenes';
         value: number | Imagene;
+      } | null)
+    | ({
+        relationTo: 'imagenes-reviews';
+        value: number | ImagenesReview;
       } | null)
     | ({
         relationTo: 'membresias';
@@ -970,6 +1002,25 @@ export interface ImagenesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "imagenes-reviews_select".
+ */
+export interface ImagenesReviewsSelect<T extends boolean = true> {
+  SupaURL?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "membresias_select".
  */
 export interface MembresiasSelect<T extends boolean = true> {
@@ -1081,6 +1132,12 @@ export interface ReviewsCursosVirtualesSelect<T extends boolean = true> {
   reseña?: T;
   fecha?: T;
   estado?: T;
+  imagenesReviews?:
+    | T
+    | {
+        imagenReview?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
