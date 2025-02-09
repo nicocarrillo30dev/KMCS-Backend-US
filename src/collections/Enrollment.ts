@@ -80,6 +80,7 @@ export const Enrollment: CollectionConfig = {
       ],
     },
   ],
+  /*
   hooks: {
     beforeChange: [
       async ({ data, req, operation, originalDoc }) => {
@@ -185,4 +186,5 @@ export const Enrollment: CollectionConfig = {
       },
     ],
   },
+  */
 }
