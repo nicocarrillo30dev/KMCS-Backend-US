@@ -4,7 +4,7 @@ import type { CollectionAfterChangeHook } from 'payload'
 
 const enrollNewUser: CollectionAfterChangeHook = async ({ doc, operation, req }) => {
   if (operation === 'create') {
-    const defaultCourses = [41330, 39826] // IDs de cursos
+    const defaultCourses = [73, 39826] // IDs de cursos
 
     setTimeout(async () => {
       try {
