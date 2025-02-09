@@ -4,7 +4,7 @@ import { isBefore, addYears } from 'date-fns'
 export const Enrollment: CollectionConfig = {
   slug: 'enrollment',
   access: {
-    read: () => true, // Allow public read
+    read: () => true, // Allow public rea
     create: () => true,
     update: () => true,
   },
