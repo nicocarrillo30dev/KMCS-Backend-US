@@ -7,6 +7,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { v4 as uuidv4 } from 'uuid'
+import { resendAdapter } from '@payloadcms/email-resend'
 
 import { withCors } from './utils/withCors'
 import { addDataAndFileToRequest } from '@payloadcms/next/utilities'
@@ -35,6 +36,12 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  email: resendAdapter({
+    defaultFromAddress: 'informes@kathymonzon.com',
+    defaultFromName: 'Kathy Monzón Cake Studio',
+    apiKey: process.env.RESEND_API_KEY || '',
+  }),
+
   admin: {
     user: Usuarios.slug,
     importMap: {
