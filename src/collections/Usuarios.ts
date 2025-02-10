@@ -394,6 +394,7 @@ export const Usuarios: CollectionConfig = {
       },
     },
     tokenExpiration: 7776000,
+    maxLoginAttempts: 30,
   },
 
   fields: [
