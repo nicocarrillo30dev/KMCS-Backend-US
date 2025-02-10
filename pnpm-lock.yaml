@@ -26,6 +26,9 @@ importers:
       '@payloadcms/storage-s3':
         specifier: ^3.17.1
         version: 3.17.1(payload@3.17.1(graphql@16.10.0)(monaco-editor@0.52.2)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.7.2))
+      '@payloadcms/translations':
+        specifier: ^3.22.0
+        version: 3.22.0
       '@upstash/redis':
         specifier: ^1.34.3
         version: 1.34.3
@@ -1284,6 +1287,9 @@ packages:
 
   '@payloadcms/translations@3.17.1':
     resolution: {integrity: sha512-Po95yVwOME5TZuKaBylTrHpmrCbLbcviWAAfAU2DBjOv5+s+aev/LmGl3bAFxTL+5ZVLlzy7m/JwBX43gdgaBg==}
+
+  '@payloadcms/translations@3.22.0':
+    resolution: {integrity: sha512-WCwVJEey9DgaOomp73pzHYZjGaLuxXVHn00tb8XAj+AeAc6GNa8heAU129MCVEKeUbToDJkNvbDWqZBNDPraIQ==}
 
   '@payloadcms/ui@3.17.1':
     resolution: {integrity: sha512-XuqSBzBEkPV9T/ER+FtdMHk77g15cBWwT9lPsaPtCWzeRqEakRVLCsH+5I5q7VID3CoWFMLLqOBExYkBV627ug==}
@@ -5782,6 +5788,10 @@ snapshots:
       - aws-crt
 
   '@payloadcms/translations@3.17.1':
+    dependencies:
+      date-fns: 4.1.0
+
+  '@payloadcms/translations@3.22.0':
     dependencies:
       date-fns: 4.1.0
 

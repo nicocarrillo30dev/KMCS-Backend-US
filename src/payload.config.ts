@@ -12,6 +12,8 @@ import { resendAdapter } from '@payloadcms/email-resend'
 import { withCors } from './utils/withCors'
 import { addDataAndFileToRequest } from '@payloadcms/next/utilities'
 
+import { es } from '@payloadcms/translations/languages/es'
+
 import { CapturaDePagos } from './collections/CapturasPagos'
 import { Categorias } from './collections/Categorias'
 import { Cursos } from './collections/Cursos'
@@ -47,6 +49,10 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+  },
+  i18n: {
+    supportedLanguages: { es },
+    fallbackLanguage: 'es',
   },
 
   serverURL: 'https://admin.kathymonzon.com',
