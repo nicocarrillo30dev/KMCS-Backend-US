@@ -59,6 +59,7 @@ export default buildConfig({
     headers: ['Content-Type', 'Authorization'],
   },
   endpoints: [
+    // ✅ DONE ✅
     {
       path: '/courses',
       method: 'get',
@@ -99,6 +100,7 @@ export default buildConfig({
         }
       }),
     },
+    // ✅ DONE ✅
     {
       path: '/courseshome',
       method: 'get',
@@ -668,7 +670,18 @@ export default buildConfig({
 
           const numericUserId = Number(userId)
 
-          // 2. Consultar los pedidos de ese usuario
+          // 2. Verificar que el usuario esté autenticado
+          const user = req.user
+          if (!user) {
+            return Response.json({ error: 'No autenticado' }, { status: 401 })
+          }
+
+          // 3. Si el usuario no es admin, asegurarse de que su ID coincida con el userId proporcionado
+          if (user.role !== 'Admin' && Number(user.id) !== numericUserId) {
+            return Response.json({ error: 'No autorizado para ver estos pedidos' }, { status: 403 })
+          }
+
+          // 4. Consultar los pedidos de ese usuario
           const ordersResult = await req.payload.find({
             collection: 'pedidos',
             where: {
@@ -680,7 +693,7 @@ export default buildConfig({
 
           const orders = ordersResult.docs
 
-          // 3. Recolectar los IDs numéricos de las referencias en cada pedido
+          // 5. Recolectar los IDs numéricos de las referencias en cada pedido
           const allCourseIDs = new Set<number>()
           const allTallerIDs = new Set<number>()
           const allMembresiaIDs = new Set<number>()
@@ -717,7 +730,7 @@ export default buildConfig({
             return Response.json(orders, { status: 200 })
           }
 
-          // 4. Consultar las colecciones referenciadas en paralelo
+          // 6. Consultar las colecciones referenciadas en paralelo
           const [coursesResult, talleresResult, membresiasResult] = await Promise.all([
             allCourseIDs.size > 0
               ? req.payload.find({
@@ -764,7 +777,7 @@ export default buildConfig({
               : Promise.resolve({ docs: [] }),
           ])
 
-          // 5. Crear mapas para búsquedas rápidas
+          // 7. Crear mapas para búsquedas rápidas
           const courseMap = new Map<number, any>()
           for (const c of coursesResult.docs) {
             courseMap.set(c.id, c)
@@ -780,7 +793,7 @@ export default buildConfig({
             membresiaMap.set(m.id, m)
           }
 
-          // 6. Fusionar la información adicional en cada pedido
+          // 8. Fusionar la información adicional en cada pedido
           const mergedOrders = orders.map((order) => {
             const newOrder = { ...order }
 
@@ -845,7 +858,7 @@ export default buildConfig({
             return newOrder
           })
 
-          // 7. Retornar los pedidos fusionados
+          // 9. Retornar los pedidos fusionados
           return Response.json(mergedOrders, { status: 200 })
         } catch (error) {
           console.error('Error en /myorders:', error)
@@ -853,6 +866,7 @@ export default buildConfig({
         }
       }),
     },
+    // ✅ DONE ✅
     {
       path: '/myorder-by-pedidoid',
       method: 'get',
@@ -1050,13 +1064,14 @@ export default buildConfig({
         }
       }),
     },
+    // ✅ DONE ✅
     {
       path: '/attendance-courses',
       method: 'get',
       handler: withCors(async (req) => {
         try {
           const result = await req.payload.find({
-            collection: 'talleres-presenciales', // Updated collection name
+            collection: 'talleres-presenciales',
             pagination: false,
             select: {
               id: true,
@@ -1364,6 +1379,7 @@ export default buildConfig({
         }
       }),
     },
+    // ✅ DONE ✅
     {
       path: '/validate-lesson',
       method: 'get',
