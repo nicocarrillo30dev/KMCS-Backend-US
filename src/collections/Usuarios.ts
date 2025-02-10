@@ -393,6 +393,7 @@ export const Usuarios: CollectionConfig = {
         `
       },
     },
+    tokenExpiration: 7776000,
   },
 
   fields: [
