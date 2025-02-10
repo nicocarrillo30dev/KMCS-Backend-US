@@ -60,10 +60,10 @@ export const Cursos: CollectionConfig = {
   },
 
   access: {
-    read: () => true, // Allow public read access
-    create: () => true,
-    update: () => true,
-    delete: () => true,
+    read: () => true,
+    create: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
 
   admin: {

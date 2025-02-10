@@ -240,7 +240,7 @@ export const pedidos: CollectionConfig = {
       },
     },
   ],
-  /*
+
   hooks: {
     afterChange: [
       async ({ doc, req, operation, previousDoc }) => {
@@ -267,5 +267,4 @@ export const pedidos: CollectionConfig = {
       },
     ],
   },
-  */
 }
