@@ -45,14 +45,14 @@ export default buildConfig({
   serverURL: 'https://admin.kathymonzon.com',
   //serverURL: 'http://localhost:3000',
   csrf: [
-    'https://www.nicolascarrillo.com',
+    'https://www.kathymonzon.com',
     //'http://localhost:3000',
     'https://server-production-021a.up.railway.app',
   ],
 
   cors: {
     origins: [
-      'https://www.nicolascarrillo.com',
+      'https://www.kathymonzon.com',
       //'http://localhost:3000',
       'https://server-production-021a.up.railway.app',
     ],
