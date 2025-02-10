@@ -5,13 +5,8 @@ export const pedidos: CollectionConfig = {
 
   access: {
     read: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
-    // Solo permite crear pedidos si el usuario está autenticado y es administrador
     create: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
-
-    // Solo permite actualizar pedidos a administradores
     update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
-
-    // Solo permite borrar pedidos a administradores
     delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
 
@@ -265,8 +260,7 @@ export const pedidos: CollectionConfig = {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              // Envía la clave secreta usando la variable de entorno
-              'x-internal-secret': process.env.INTERNAL_SECRET || 'TuClaveMuySecreta123!',
+              'x-internal-secret': process.env.INTERNAL_SECRET,
             },
             body: JSON.stringify({ doc, operation, previousDoc }),
           })

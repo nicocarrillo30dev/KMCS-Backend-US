@@ -293,9 +293,10 @@ export const Usuarios: CollectionConfig = {
     },
   ],
   access: {
-    read: () => true,
-    create: () => true,
-    update: () => true,
+    read: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    create: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
   admin: {
     useAsTitle: 'email',
