@@ -312,7 +312,7 @@ export const Usuarios: CollectionConfig = {
           token: string
           user: { nombre: string }
         }
-        return `Hey ${user.nombre}, reestablece tu contraseña`
+        return `Hola ${user.nombre}, reestablece tu contraseña`
       },
       generateEmailHTML: (args: any): string => {
         const { req, token, user } = args as {
@@ -362,34 +362,7 @@ export const Usuarios: CollectionConfig = {
                 </p>
             </td>
         </tr>
-        <tr>
-            <td align="center">
-                <table cellpadding="0" cellspacing="0" border="0">
-                    <tr>
-                        <td style="padding: 0 10px;">
-                            <a href="#" aria-label="Facebook">
-                                <img src="https://iskcfyagxkeiplauomfj.supabase.co/storage/v1/object/public/KMCS/Extra/icon__instagram-blue.svg" alt="Instagram" width="24" height="24">
-                            </a>
-                        </td>
-                        <td style="padding: 0 10px;">
-                            <a href="#" aria-label="Instagram">
-                                <img src="https://iskcfyagxkeiplauomfj.supabase.co/storage/v1/object/public/KMCS/Extra/icon__instagram-blue.svg" alt="Instagram" width="24" height="24">
-                            </a>
-                        </td>
-                        <td style="padding: 0 10px;">
-                            <a href="#" aria-label="TikTok">
-                                <img src="https://iskcfyagxkeiplauomfj.supabase.co/storage/v1/object/public/KMCS/Extra/icon__instagram-blue.svg" alt="Instagram" width="24" height="24">
-                            </a>
-                        </td>
-                        <td style="padding: 0 10px;">
-                            <a href="#" aria-label="WhatsApp">
-                                <img src="https://iskcfyagxkeiplauomfj.supabase.co/storage/v1/object/public/KMCS/Extra/icon__instagram-blue.svg" alt="Instagram" width="24" height="24">
-                            </a>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
+    
         <tr>
             <td align="center" >
                 <a href="https://kathymonzon.com" style="color: #0a1155; text-decoration: none; font-size: 15px; margin: 24px 0 12px 0px; display: block;">kathymonzon.com</a>
