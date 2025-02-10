@@ -303,6 +303,14 @@ export const Usuarios: CollectionConfig = {
   },
   hooks: {
     afterChange: [enrollNewUser],
+    afterLogin: [
+      async ({ user }) => {
+        // Si el usuario no es administrador, se lanza un error
+        if (user.role !== 'Admin') {
+          throw new Error('No estás autorizado para acceder al panel de administración.')
+        }
+      },
+    ],
   },
   auth: {
     forgotPassword: {
@@ -362,7 +370,7 @@ export const Usuarios: CollectionConfig = {
                 </p>
             </td>
         </tr>
-    
+        
         <tr>
             <td align="center" >
                 <a href="https://kathymonzon.com" style="color: #0a1155; text-decoration: none; font-size: 15px; margin: 24px 0 12px 0px; display: block;">kathymonzon.com</a>
