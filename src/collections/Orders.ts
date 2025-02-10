@@ -4,10 +4,15 @@ export const pedidos: CollectionConfig = {
   slug: 'pedidos',
 
   access: {
-    read: () => true,
-    create: () => true,
-    update: () => true,
-    delete: () => true,
+    read: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    // Solo permite crear pedidos si el usuario está autenticado y es administrador
+    create: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+
+    // Solo permite actualizar pedidos a administradores
+    update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+
+    // Solo permite borrar pedidos a administradores
+    delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
 
   fields: [
@@ -258,7 +263,11 @@ export const pedidos: CollectionConfig = {
         try {
           await fetch('https://server-production-021a.up.railway.app/process-completado', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              // Envía la clave secreta usando la variable de entorno
+              'x-internal-secret': process.env.INTERNAL_SECRET || 'TuClaveMuySecreta123!',
+            },
             body: JSON.stringify({ doc, operation, previousDoc }),
           })
         } catch (err) {
