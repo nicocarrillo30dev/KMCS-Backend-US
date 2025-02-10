@@ -5,6 +5,8 @@ export const CapturaDePagos: CollectionConfig = {
   access: {
     read: () => true,
     create: () => true,
+    update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
   admin: {},
   fields: [

@@ -13,7 +13,7 @@ const ReviewsTalleresPresenciales: CollectionConfig = {
     read: () => true,
     create: () => true,
     update: () => true,
-    delete: () => true,
+    delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
   fields: [
     {

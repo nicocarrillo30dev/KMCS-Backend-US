@@ -4,9 +4,9 @@ export const pedidos: CollectionConfig = {
   slug: 'pedidos',
 
   access: {
-    read: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
-    create: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
-    update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    read: () => true,
+    create: () => true,
+    update: () => true,
     delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
 

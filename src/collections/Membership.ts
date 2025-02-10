@@ -6,10 +6,10 @@ export const Membresias: CollectionConfig = {
     useAsTitle: 'nombre', // Utiliza el campo "nombre" como título
   },
   access: {
-    read: () => true, // Allow public read access
-    create: () => true,
-    update: () => true,
-    delete: () => true,
+    read: () => true,
+    create: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
   fields: [
     {

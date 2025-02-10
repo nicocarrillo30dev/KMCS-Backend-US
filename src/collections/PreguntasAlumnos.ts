@@ -17,6 +17,7 @@ const PreguntasRespuestas: CollectionConfig = {
     read: () => true,
     create: () => true,
     update: () => true,
+    delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
   fields: [
     {

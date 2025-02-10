@@ -17,8 +17,9 @@ export const Categorias: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: () => true,
-    update: () => true,
+    create: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
+    delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
   admin: {
     useAsTitle: 'name',
