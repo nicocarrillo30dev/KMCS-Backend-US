@@ -308,7 +308,7 @@ export const Usuarios: CollectionConfig = {
         const host = (req.headers as Record<string, any>)['host'] || ''
 
         if (host.includes('admin.kathymonzon.com')) {
-          if (user.role !== 'admin') {
+          if (user.role !== 'Admin') {
             throw new Error('No estás autorizado para acceder al panel de administración.')
           }
         }
