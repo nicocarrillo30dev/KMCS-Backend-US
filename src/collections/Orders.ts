@@ -260,7 +260,6 @@ export const pedidos: CollectionConfig = {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-internal-secret': process.env.INTERNAL_SECRET,
             },
             body: JSON.stringify({ doc, operation, previousDoc }),
           })
