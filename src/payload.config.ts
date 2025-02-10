@@ -867,7 +867,7 @@ export default buildConfig({
       method: 'get',
       handler: withCors(async (req) => {
         try {
-          // 1) Obtener el 'pedidoID' de la query string
+          // 1) Get the 'pedidoID' from the query string
           const urlString = req.url ?? 'http://localhost'
           const url = new URL(urlString, 'http://localhost')
           const pedidoID = url.searchParams.get('pedidoID')
@@ -876,36 +876,24 @@ export default buildConfig({
             return Response.json({ error: 'Falta el parámetro "pedidoID"' }, { status: 400 })
           }
 
-          // 2) Verificar que el usuario esté autenticado
-          const user = req.user
-          if (!user) {
-            return Response.json({ error: 'Usuario no autenticado' }, { status: 401 })
-          }
-
-          // 3) Crear filtro para la consulta:
-          //    Si el usuario no es Admin, se exige que el campo "client" sea igual a user.id
-          const whereFilter = {
-            pedidoID: { equals: pedidoID },
-            ...(user.role !== 'Admin' ? { client: { equals: user.id } } : {}),
-          }
-
-          // 4) Consultar la colección "pedidos" usando overrideAccess para ignorar la restricción de acceso
+          // 2) Fetch the single "pedidos" doc with that pedidoID, depth=0
           const orderResult = await req.payload.find({
             collection: 'pedidos',
-            overrideAccess: true, // Ignora la regla de que solo los Admin puedan leer
-            where: whereFilter,
+            where: {
+              pedidoID: { equals: pedidoID },
+            },
             depth: 0,
             pagination: false,
           })
 
           if (!orderResult.docs || orderResult.docs.length === 0) {
-            return Response.json({ error: 'Pedido no encontrado o no autorizado' }, { status: 404 })
+            return Response.json({ error: 'Pedido no encontrado' }, { status: 404 })
           }
 
-          // Se asume que el primer (y único) documento es el pedido buscado
+          // We'll assume the first (and only) doc is our order
           const order = orderResult.docs[0]
 
-          // 5) Reunir referencias de cursos, talleres y membresías
+          // 3) Gather references from cursos, talleresPresenciales, membresias
           const allCourseIDs = new Set<number>()
           const allTallerIDs = new Set<number>()
           const allMembresiaIDs = new Set<number>()
@@ -932,12 +920,12 @@ export default buildConfig({
             }
           }
 
-          // Si no hay referencias adicionales, retorna el pedido directamente
+          // If no refs at all, just return the order
           if (allCourseIDs.size === 0 && allTallerIDs.size === 0 && allMembresiaIDs.size === 0) {
             return Response.json(order, { status: 200 })
           }
 
-          // 6) Consultar las colecciones referenciadas en paralelo
+          // 4) Fetch referenced docs from each collection
           const [coursesResult, talleresResult, membresiasResult] = await Promise.all([
             allCourseIDs.size > 0
               ? req.payload.find({
@@ -953,6 +941,7 @@ export default buildConfig({
                   },
                 })
               : Promise.resolve({ docs: [] }),
+
             allTallerIDs.size > 0
               ? req.payload.find({
                   collection: 'talleres-presenciales',
@@ -968,6 +957,7 @@ export default buildConfig({
                   },
                 })
               : Promise.resolve({ docs: [] }),
+
             allMembresiaIDs.size > 0
               ? req.payload.find({
                   collection: 'membresias',
@@ -984,24 +974,26 @@ export default buildConfig({
               : Promise.resolve({ docs: [] }),
           ])
 
-          // 7) Crear mapas para búsqueda rápida
+          // 5) Create Maps for quick lookup
           const courseMap = new Map<number, any>()
           for (const c of coursesResult.docs) {
             courseMap.set(c.id, c)
           }
+
           const tallerMap = new Map<number, any>()
           for (const t of talleresResult.docs) {
             tallerMap.set(t.id, t)
           }
+
           const membresiaMap = new Map<number, any>()
           for (const mem of membresiasResult.docs) {
             membresiaMap.set(mem.id, mem)
           }
 
-          // 8) Fusionar la información adicional en el pedido
-          const finalOrder = JSON.parse(JSON.stringify(order)) // Clonación
+          // 6) Merge the data back into the single order
+          const finalOrder = JSON.parse(JSON.stringify(order)) // clone
 
-          // Fusionar cursos
+          // Merge cursos
           if (Array.isArray(finalOrder.cursos)) {
             finalOrder.cursos = finalOrder.cursos.map((c: any) => {
               if (typeof c.cursoRef === 'number') {
@@ -1021,7 +1013,7 @@ export default buildConfig({
             })
           }
 
-          // Fusionar talleresPresenciales
+          // Merge talleresPresenciales
           if (Array.isArray(finalOrder.talleresPresenciales)) {
             finalOrder.talleresPresenciales = finalOrder.talleresPresenciales.map((t: any) => {
               if (typeof t.tallerRef === 'number') {
@@ -1042,7 +1034,7 @@ export default buildConfig({
             })
           }
 
-          // Fusionar membresias
+          // Merge membresias
           if (Array.isArray(finalOrder.membresias)) {
             finalOrder.membresias = finalOrder.membresias.map((m: any) => {
               if (typeof m.membresiaRef === 'number') {
@@ -1059,7 +1051,7 @@ export default buildConfig({
             })
           }
 
-          // 9) Retornar el pedido final fusionado
+          // 7) Return the final merged order
           return Response.json(finalOrder, { status: 200 })
         } catch (error) {
           console.error('Error en /myorder-by-pedidoid:', error)
