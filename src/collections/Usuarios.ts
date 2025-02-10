@@ -312,7 +312,7 @@ export const Usuarios: CollectionConfig = {
           token: string
           user: { nombre: string }
         }
-        return `Hey ${user.nombre}, reset your password!`
+        return `Hey ${user.nombre}, reestablece tu contraseña`
       },
       generateEmailHTML: (args: any): string => {
         const { req, token, user } = args as {
