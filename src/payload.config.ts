@@ -654,7 +654,7 @@ export default buildConfig({
       method: 'get',
       handler: withCors(async (req) => {
         try {
-          // 1. Parse userId from the query string
+          // 1. Extraer userId desde la query string
           const urlString = req.url ?? 'http://localhost'
           const url = new URL(urlString, 'http://localhost')
           const userId = url.searchParams.get('userId')
@@ -668,7 +668,7 @@ export default buildConfig({
 
           const numericUserId = Number(userId)
 
-          // 2. Fetch orders (pedidos) for that userId, depth=0
+          // 2. Consultar los pedidos de ese usuario
           const ordersResult = await req.payload.find({
             collection: 'pedidos',
             where: {
@@ -680,13 +680,13 @@ export default buildConfig({
 
           const orders = ordersResult.docs
 
-          // 3. Collect numeric IDs from each array in the orders:
+          // 3. Recolectar los IDs numéricos de las referencias en cada pedido
           const allCourseIDs = new Set<number>()
           const allTallerIDs = new Set<number>()
           const allMembresiaIDs = new Set<number>()
 
           for (const order of orders) {
-            // A) cursos
+            // A) Cursos
             if (Array.isArray(order.cursos)) {
               for (const course of order.cursos) {
                 if (typeof course.cursoRef === 'number') {
@@ -694,7 +694,7 @@ export default buildConfig({
                 }
               }
             }
-            // B) talleresPresenciales
+            // B) Talleres Presenciales
             if (Array.isArray(order.talleresPresenciales)) {
               for (const taller of order.talleresPresenciales) {
                 if (typeof taller.tallerRef === 'number') {
@@ -702,7 +702,7 @@ export default buildConfig({
                 }
               }
             }
-            // C) membresias
+            // C) Membresías
             if (Array.isArray(order.membresias)) {
               for (const mem of order.membresias) {
                 if (typeof mem.membresiaRef === 'number') {
@@ -712,22 +712,19 @@ export default buildConfig({
             }
           }
 
-          // If no items at all, return orders directly
+          // Si no hay referencias en ninguna colección, retorna los pedidos directamente
           if (allCourseIDs.size === 0 && allTallerIDs.size === 0 && allMembresiaIDs.size === 0) {
             return Response.json(orders, { status: 200 })
           }
 
-          // 4. Fetch each collection in parallel
-          //    Adjust "where" fields and "select" to match your schema.
+          // 4. Consultar las colecciones referenciadas en paralelo
           const [coursesResult, talleresResult, membresiasResult] = await Promise.all([
             allCourseIDs.size > 0
               ? req.payload.find({
                   collection: 'cursos',
                   pagination: false,
                   where: {
-                    id: {
-                      in: Array.from(allCourseIDs),
-                    },
+                    id: { in: Array.from(allCourseIDs) },
                   },
                   select: {
                     id: true,
@@ -736,15 +733,12 @@ export default buildConfig({
                   },
                 })
               : Promise.resolve({ docs: [] }),
-
             allTallerIDs.size > 0
               ? req.payload.find({
                   collection: 'talleres-presenciales',
                   pagination: false,
                   where: {
-                    id: {
-                      in: Array.from(allTallerIDs),
-                    },
+                    id: { in: Array.from(allTallerIDs) },
                   },
                   select: {
                     id: true,
@@ -754,15 +748,12 @@ export default buildConfig({
                   },
                 })
               : Promise.resolve({ docs: [] }),
-
             allMembresiaIDs.size > 0
               ? req.payload.find({
                   collection: 'membresias',
                   pagination: false,
                   where: {
-                    id: {
-                      in: Array.from(allMembresiaIDs),
-                    },
+                    id: { in: Array.from(allMembresiaIDs) },
                   },
                   select: {
                     id: true,
@@ -773,7 +764,7 @@ export default buildConfig({
               : Promise.resolve({ docs: [] }),
           ])
 
-          // 5. Create maps
+          // 5. Crear mapas para búsquedas rápidas
           const courseMap = new Map<number, any>()
           for (const c of coursesResult.docs) {
             courseMap.set(c.id, c)
@@ -789,11 +780,11 @@ export default buildConfig({
             membresiaMap.set(m.id, m)
           }
 
-          // 6. Merge the data into each order’s arrays
+          // 6. Fusionar la información adicional en cada pedido
           const mergedOrders = orders.map((order) => {
             const newOrder = { ...order }
 
-            // A) Merge "cursos"
+            // A) Fusionar "cursos"
             if (Array.isArray(newOrder.cursos)) {
               newOrder.cursos = newOrder.cursos.map((courseItem) => {
                 if (typeof courseItem.cursoRef === 'number') {
@@ -813,7 +804,7 @@ export default buildConfig({
               })
             }
 
-            // B) Merge "talleresPresenciales"
+            // B) Fusionar "talleresPresenciales"
             if (Array.isArray(newOrder.talleresPresenciales)) {
               newOrder.talleresPresenciales = newOrder.talleresPresenciales.map((tallerItem) => {
                 if (typeof tallerItem.tallerRef === 'number') {
@@ -834,7 +825,7 @@ export default buildConfig({
               })
             }
 
-            // C) Merge "membresias"
+            // C) Fusionar "membresias"
             if (Array.isArray(newOrder.membresias)) {
               newOrder.membresias = newOrder.membresias.map((memItem) => {
                 if (typeof memItem.membresiaRef === 'number') {
@@ -854,7 +845,7 @@ export default buildConfig({
             return newOrder
           })
 
-          // 7. Return the final orders
+          // 7. Retornar los pedidos fusionados
           return Response.json(mergedOrders, { status: 200 })
         } catch (error) {
           console.error('Error en /myorders:', error)
