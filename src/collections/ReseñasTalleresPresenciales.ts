@@ -121,7 +121,7 @@ const ReviewsTalleresPresenciales: CollectionConfig = {
         setImmediate(async () => {
           try {
             const response = await fetch(
-              `https://admin.nicolascarrillo.com/api/average-reviews-talleres?tallerId=${tallerId}`,
+              `https://admin.kathymonzon.com/api/average-reviews-talleres?tallerId=${tallerId}`,
             )
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`)
@@ -150,7 +150,7 @@ const ReviewsTalleresPresenciales: CollectionConfig = {
         setImmediate(async () => {
           try {
             const response = await fetch(
-              `https://admin.nicolascarrillo.com/api/average-reviews-talleres?tallerId=${tallerId}`,
+              `https://admin.kathymonzon.com/api/average-reviews-talleres?tallerId=${tallerId}`,
             )
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`)

@@ -42,18 +42,18 @@ export default buildConfig({
     },
   },
 
-  serverURL: 'https://admin.nicolascarrillo.com',
+  serverURL: 'https://admin.kathymonzon.com',
   //serverURL: 'http://localhost:3000',
   csrf: [
     'https://www.nicolascarrillo.com',
-    'http://localhost:3000',
+    //'http://localhost:3000',
     'https://server-production-021a.up.railway.app',
   ],
 
   cors: {
     origins: [
       'https://www.nicolascarrillo.com',
-      'http://localhost:3000',
+      //'http://localhost:3000',
       'https://server-production-021a.up.railway.app',
     ],
     headers: ['Content-Type', 'Authorization'],
@@ -161,7 +161,7 @@ export default buildConfig({
           }
 
           // 2. Obtenemos las reseñas asociadas a ese curso
-          const reviewsUrl = `https://admin.nicolascarrillo.com/api/reviews-cursos-virtuales?depth=0&where[curso][equals]=${cursoId}`
+          const reviewsUrl = `https://admin.kathymonzon.com/api/reviews-cursos-virtuales?depth=0&where[curso][equals]=${cursoId}`
           const response = await fetch(reviewsUrl)
           if (!response.ok) {
             throw new Error(`Error al obtener reseñas: ${response.statusText}`)
@@ -184,18 +184,15 @@ export default buildConfig({
           // 4. Hacemos PATCH a /api/cursos/[cursoId] para actualizar "promedioreviews"
           //    Esto llama a la API REST de Payload en la ruta "Update by ID"
           //    (Si tu colección tiene auth, quizá necesites Authorization header)
-          const patchResponse = await fetch(
-            `https://admin.nicolascarrillo.com/api/cursos/${cursoId}`,
-            {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                promedioreviews: averageRating, // Campo que queremos actualizar
-              }),
+          const patchResponse = await fetch(`https://admin.kathymonzon.com/api/cursos/${cursoId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
             },
-          )
+            body: JSON.stringify({
+              promedioreviews: averageRating, // Campo que queremos actualizar
+            }),
+          })
 
           if (!patchResponse.ok) {
             throw new Error(`Error al actualizar curso: ${patchResponse.statusText}`)
@@ -1123,7 +1120,7 @@ export default buildConfig({
           }
 
           // 2. Obtener las reseñas asociadas a ese taller
-          const reviewsUrl = `https://admin.nicolascarrillo.com/api/reviews-talleres-presenciales?depth=0&where[taller][equals]=${tallerId}`
+          const reviewsUrl = `https://admin.kathymonzon.com/api/reviews-talleres-presenciales?depth=0&where[taller][equals]=${tallerId}`
           const response = await fetch(reviewsUrl)
           if (!response.ok) {
             throw new Error(`Error al obtener reseñas: ${response.statusText}`)
@@ -1148,7 +1145,7 @@ export default buildConfig({
 
           // 4. Hacer PATCH a /api/talleres-presenciales/[tallerId] para actualizar "promedioreviews"
           const patchResponse = await fetch(
-            `https://admin.nicolascarrillo.com/api/talleres-presenciales/${tallerId}`,
+            `https://admin.kathymonzon.com/api/talleres-presenciales/${tallerId}`,
             {
               method: 'PATCH',
               headers: {
@@ -1398,7 +1395,7 @@ export default buildConfig({
           // 2) Llamar a /usuarios/me para verificar la sesión y obtener userId
           //    Pasamos la cookie entrante para que Payload reconozca la sesión
           const cookie = req.headers.get('cookie') || ''
-          const meRes = await fetch('https://admin.nicolascarrillo.com/api/usuarios/me', {
+          const meRes = await fetch('https://admin.kathymonzon.com/api/usuarios/me', {
             method: 'GET',
             headers: { Cookie: cookie },
           })
@@ -1421,7 +1418,7 @@ export default buildConfig({
           // 3) Buscar en "enrollment" con depth=0:
           //    - usuario = userId
           //    - cursos contiene cursoId
-          const enrollmentUrl = `https://admin.nicolascarrillo.com/api/enrollment?depth=0&where[usuario][equals]=${userId}&where[cursos][in]=${cursoId}`
+          const enrollmentUrl = `https://admin.kathymonzon.com/api/enrollment?depth=0&where[usuario][equals]=${userId}&where[cursos][in]=${cursoId}`
           const enrollmentRes = await fetch(enrollmentUrl, {
             method: 'GET',
             headers: { Cookie: cookie },

@@ -138,7 +138,7 @@ const ReviewsCursosVirtuales: CollectionConfig = {
         setImmediate(async () => {
           try {
             const response = await fetch(
-              `https://admin.nicolascarrillo.com/api/average-reviews?cursoId=${cursoId}`,
+              `https://admin.kathymonzon.com/api/average-reviews?cursoId=${cursoId}`,
             )
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`)
@@ -167,7 +167,7 @@ const ReviewsCursosVirtuales: CollectionConfig = {
         setImmediate(async () => {
           try {
             const response = await fetch(
-              `https://admin.nicolascarrillo.com/api/average-reviews?cursoId=${cursoId}`,
+              `https://admin.kathymonzon.com/api/average-reviews?cursoId=${cursoId}`,
             )
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`)
