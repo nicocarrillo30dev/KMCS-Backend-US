@@ -1479,20 +1479,36 @@ export default buildConfig({
       method: 'post',
       handler: withCors(async (req) => {
         try {
-          let data
+          // Declaramos data como Record<string, any> para poder asignar propiedades
+          let data: Record<string, any> = {}
           const contentType = req.headers.get('content-type') || ''
 
           if (contentType.includes('multipart/form-data')) {
-            // Procesa el request multipart
-            await addDataAndFileToRequest(req)
-            // Intentamos obtener los campos desde req.data o req.body
-            data = req.data || req.body || {}
+            // Usamos el método nativo de Request para extraer el FormData
+            const form = await req.formData!()
+            // Recorremos las entradas del FormData y las asignamos a data.
+            // Si el valor es un File, lo asignamos a req.file.
+            for (const [key, value] of form.entries()) {
+              if (value instanceof File) {
+                // Convertimos (cast) el objeto File a un tipo que cumpla con lo que espera req.payload.create.
+                req.file = value as unknown as {
+                  data: Buffer
+                  mimetype: string
+                  name: string
+                  size: number
+                  tempFilePath?: string
+                }
+              } else {
+                data[key] = value
+              }
+            }
           } else {
             data = await req.json!()
           }
 
-          console.log('Datos parseados:', data) // Para depuración
+          console.log('Datos parseados:', data)
 
+          // Extraemos los campos necesarios
           const { userId, currentPassword, password, ...otherFields } = data
 
           if (!userId) {
@@ -1500,17 +1516,16 @@ export default buildConfig({
             return Response.json({ error: 'Falta el campo userId' }, { status: 400 })
           }
 
-          // Armar objeto de campos a actualizar
-          const updatedFields = { ...otherFields }
+          // Definimos updatedFields como Record<string, any> para asignar propiedades dinámicamente
+          const updatedFields: Record<string, any> = { ...otherFields }
 
-          // Si se envía cambio de contraseña, se incluyen ambos campos.
+          // Si se envía cambio de contraseña, incluimos ambos campos
           if (currentPassword && password) {
             updatedFields.currentPassword = currentPassword
             updatedFields.password = password
           }
 
-          // Si se envía imagen, se procesa.
-          // Usamos req.file, que es la propiedad que se espera (no req.files).
+          // Si se envía imagen, se procesa
           if (req.file) {
             const file = req.file
             const fotoDoc = await req.payload.create({
