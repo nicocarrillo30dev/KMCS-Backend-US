@@ -55,6 +55,8 @@ export default buildConfig({
     fallbackLanguage: 'es',
   },
 
+  // 👁️J👁️ cuando quieras probar en local, desactiva todos los dominios
+
   serverURL: 'https://admin.kathymonzon.com',
   //serverURL: 'http://localhost:3000',
   csrf: [
