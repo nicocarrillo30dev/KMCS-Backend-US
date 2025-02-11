@@ -4,27 +4,28 @@ import { isBefore, addYears } from 'date-fns'
 export const Enrollment: CollectionConfig = {
   slug: 'enrollment',
   access: {
-    read: () => true, // Allow public rea
+    read: () => true,
     create: () => true,
     update: () => true,
+    delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
 
   fields: [
     {
-      name: 'usuario', // Relación con la colección "usuarios"
+      name: 'usuario',
       type: 'relationship',
       relationTo: 'usuarios',
       required: true,
     },
     {
-      name: 'cursos', // Relación con la colección "cursos"
+      name: 'cursos',
       type: 'relationship',
       relationTo: 'cursos',
       hasMany: true,
       required: true,
     },
     {
-      name: 'status', // Estado del curso
+      name: 'status',
       type: 'select',
       options: [
         { label: 'Activo', value: 'activo' },
