@@ -1479,23 +1479,50 @@ export default buildConfig({
       method: 'post',
       handler: withCors(async (req) => {
         try {
-          const data = await req.json!()
-          const { userId, currentPassword, password, ...otherFields } = data
+          let data
+          const contentType = req.headers.get('content-type') || ''
+
+          // Si se envía multipart/form-data, se procesa con el helper.
+          if (contentType.includes('multipart/form-data')) {
+            await addDataAndFileToRequest(req)
+            data = req.data
+          } else {
+            data = await req.json!()
+          }
+
+          // Extraer campos enviados.
+          const { userId, currentPassword, password, ...otherFields } = data || {}
 
           if (!userId) {
             return Response.json({ error: 'Falta el campo userId' }, { status: 400 })
           }
 
-          // Se arma el objeto de campos a actualizar
+          // Armar objeto con los campos a actualizar.
           const updatedFields = { ...otherFields }
 
-          // Si se incluye cambio de contraseña, se añaden los campos correspondientes
+          // Si se envía cambio de contraseña, se incluyen ambos campos.
           if (currentPassword && password) {
             updatedFields.currentPassword = currentPassword
             updatedFields.password = password
           }
 
-          // Actualizar el usuario en la colección "usuarios"
+          // Procesar imagen, si se envía.
+          // NOTA: Se utiliza req.file (no req.files) para la imagen.
+          if (req.file) {
+            const file = req.file
+            const fotoDoc = await req.payload.create({
+              collection: 'fotosUsuarios',
+              data: {}, // Se incluye data vacía para cumplir con el tipado
+              file: file,
+            })
+
+            if (!fotoDoc || !fotoDoc.id) {
+              return Response.json({ error: 'Error al subir la imagen' }, { status: 500 })
+            }
+            updatedFields.fotoUsuario = fotoDoc.id
+          }
+
+          // Actualizar el usuario en la colección "usuarios".
           const updatedUser = await req.payload.update({
             collection: 'usuarios',
             id: userId,
