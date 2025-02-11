@@ -297,7 +297,6 @@ export const Usuarios: CollectionConfig = {
     create: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
     update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
     delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
-
     admin: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
   admin: {

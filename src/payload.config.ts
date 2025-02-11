@@ -1482,22 +1482,25 @@ export default buildConfig({
           let data
           const contentType = req.headers.get('content-type') || ''
 
-          // Si se envía multipart/form-data, se procesa con el helper.
           if (contentType.includes('multipart/form-data')) {
+            // Procesa el request multipart
             await addDataAndFileToRequest(req)
-            data = req.data
+            // Intentamos obtener los campos desde req.data o req.body
+            data = req.data || req.body || {}
           } else {
             data = await req.json!()
           }
 
-          // Extraer campos enviados.
-          const { userId, currentPassword, password, ...otherFields } = data || {}
+          console.log('Datos parseados:', data) // Para depuración
+
+          const { userId, currentPassword, password, ...otherFields } = data
 
           if (!userId) {
+            console.error('No se encontró userId en los datos:', data)
             return Response.json({ error: 'Falta el campo userId' }, { status: 400 })
           }
 
-          // Armar objeto con los campos a actualizar.
+          // Armar objeto de campos a actualizar
           const updatedFields = { ...otherFields }
 
           // Si se envía cambio de contraseña, se incluyen ambos campos.
@@ -1506,13 +1509,13 @@ export default buildConfig({
             updatedFields.password = password
           }
 
-          // Procesar imagen, si se envía.
-          // NOTA: Se utiliza req.file (no req.files) para la imagen.
+          // Si se envía imagen, se procesa.
+          // Usamos req.file, que es la propiedad que se espera (no req.files).
           if (req.file) {
             const file = req.file
             const fotoDoc = await req.payload.create({
               collection: 'fotosUsuarios',
-              data: {}, // Se incluye data vacía para cumplir con el tipado
+              data: {}, // Se envía data vacía para cumplir con el tipado
               file: file,
             })
 
@@ -1522,7 +1525,7 @@ export default buildConfig({
             updatedFields.fotoUsuario = fotoDoc.id
           }
 
-          // Actualizar el usuario en la colección "usuarios".
+          // Actualizar el usuario en la colección "usuarios"
           const updatedUser = await req.payload.update({
             collection: 'usuarios',
             id: userId,
