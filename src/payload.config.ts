@@ -37,6 +37,14 @@ const ephemeralCartsStore: Record<string, any> = {}
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+type UploadFile = {
+  data: Buffer
+  mimetype: string
+  name: string
+  size: number
+  tempFilePath?: string
+}
+
 export default buildConfig({
   email: resendAdapter({
     defaultFromAddress: 'informes@kathymonzon.com',
@@ -1473,31 +1481,33 @@ export default buildConfig({
         }
       }),
     },
-    // MODIFICAR CUENTA
     {
       path: '/modificarcuenta',
       method: 'post',
       handler: withCors(async (req) => {
         try {
-          // Declaramos data como Record<string, any> para poder asignar propiedades
+          // Declaramos data como objeto indexable
           let data: Record<string, any> = {}
           const contentType = req.headers.get('content-type') || ''
 
           if (contentType.includes('multipart/form-data')) {
-            // Usamos el método nativo de Request para extraer el FormData
+            // Usamos el método nativo para extraer el formData
             const form = await req.formData!()
-            // Recorremos las entradas del FormData y las asignamos a data.
-            // Si el valor es un File, lo asignamos a req.file.
+            // Recorremos las entradas del formData
             for (const [key, value] of form.entries()) {
               if (value instanceof File) {
-                // Convertimos (cast) el objeto File a un tipo que cumpla con lo que espera req.payload.create.
-                req.file = value as unknown as {
-                  data: Buffer
-                  mimetype: string
-                  name: string
-                  size: number
-                  tempFilePath?: string
+                // Convertir el File (del navegador) a un objeto que cumpla con UploadFile
+                const fileValue = value as File
+                const arrayBuffer = await fileValue.arrayBuffer()
+                // Creamos un objeto con las propiedades que requiere Payload
+                const uploadFile: UploadFile = {
+                  data: Buffer.from(arrayBuffer),
+                  mimetype: fileValue.type,
+                  name: fileValue.name,
+                  size: fileValue.size,
                 }
+                // Forzamos que req.file sea de tipo UploadFile
+                req.file = uploadFile as unknown as UploadFile
               } else {
                 data[key] = value
               }
@@ -1508,32 +1518,37 @@ export default buildConfig({
 
           console.log('Datos parseados:', data)
 
-          // Extraemos los campos necesarios
-          const { userId, currentPassword, password, ...otherFields } = data
+          // Forzamos a que data tenga las propiedades esperadas
+          const { userId, currentPassword, password, ...otherFields } = data as {
+            userId: string
+            currentPassword?: string
+            password?: string
+            [key: string]: any
+          }
 
           if (!userId) {
             console.error('No se encontró userId en los datos:', data)
             return Response.json({ error: 'Falta el campo userId' }, { status: 400 })
           }
 
-          // Definimos updatedFields como Record<string, any> para asignar propiedades dinámicamente
+          // Declaramos updatedFields como objeto indexable para evitar errores de TS
           const updatedFields: Record<string, any> = { ...otherFields }
 
-          // Si se envía cambio de contraseña, incluimos ambos campos
+          // Si se envía cambio de contraseña, incluir ambos campos
           if (currentPassword && password) {
             updatedFields.currentPassword = currentPassword
             updatedFields.password = password
           }
 
-          // Si se envía imagen, se procesa
+          // Procesar la imagen, si existe
           if (req.file) {
-            const file = req.file
+            // Ya tenemos req.file convertido a UploadFile
+            const uploadFile = req.file as UploadFile
             const fotoDoc = await req.payload.create({
               collection: 'fotosUsuarios',
-              data: {}, // Se envía data vacía para cumplir con el tipado
-              file: file,
+              data: {}, // data vacía para cumplir con el tipado
+              file: uploadFile,
             })
-
             if (!fotoDoc || !fotoDoc.id) {
               return Response.json({ error: 'Error al subir la imagen' }, { status: 500 })
             }
