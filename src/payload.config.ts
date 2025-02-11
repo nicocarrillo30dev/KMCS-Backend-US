@@ -1473,6 +1473,45 @@ export default buildConfig({
         }
       }),
     },
+    // MODIFICAR CUENTA
+    {
+      path: '/modificarcuenta',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          const data = await req.json!()
+          const { userId, currentPassword, password, ...otherFields } = data
+
+          if (!userId) {
+            return Response.json({ error: 'Falta el campo userId' }, { status: 400 })
+          }
+
+          // Se arma el objeto de campos a actualizar
+          const updatedFields = { ...otherFields }
+
+          // Si se incluye cambio de contraseña, se añaden los campos correspondientes
+          if (currentPassword && password) {
+            updatedFields.currentPassword = currentPassword
+            updatedFields.password = password
+          }
+
+          // Actualizar el usuario en la colección "usuarios"
+          const updatedUser = await req.payload.update({
+            collection: 'usuarios',
+            id: userId,
+            data: updatedFields,
+          })
+
+          return Response.json(updatedUser, { status: 200 })
+        } catch (error) {
+          console.error('Error en /modificarcuenta:', error)
+          return Response.json(
+            { error: 'Error interno del servidor al modificar la cuenta' },
+            { status: 500 },
+          )
+        }
+      }),
+    },
   ],
 
   collections: [
