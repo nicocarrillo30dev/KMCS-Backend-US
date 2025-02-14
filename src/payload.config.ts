@@ -1,4 +1,4 @@
-// storage-adapter-import-placeholder
+// storage-adapter-import-placehold
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -36,6 +36,10 @@ const ephemeralCartsStore: Record<string, any> = {}
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+const IZIPAY_USER = process.env.IZIPAY_USER || '27059081'
+const IZIPAY_PASSWORD =
+  process.env.IZIPAY_PASSWORD || 'testpassword_Ha0g86Dd5BWsmAfYLKNztGz208husq08sqhFCI3CYOzBD'
 
 type UploadFile = {
   data: Buffer
@@ -425,6 +429,73 @@ export default buildConfig({
         } catch (error) {
           console.error('Error en /checkout-data:', error)
           return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
+        }
+      }),
+    },
+    {
+      path: '/izipay-token',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          // (Opcional) Si necesitas parsear form-data:
+          // await addDataAndFileToRequest(req);
+
+          // Pero si el front te envía JSON en el body, puedes parsearlo así:
+          const body = await req.json!()
+          const { total, orderId, email } = body
+
+          if (!total || !orderId || !email) {
+            return Response.json(
+              { error: 'Faltan parámetros obligatorios: total, orderId, email' },
+              { status: 400 },
+            )
+          }
+
+          // Llamamos a la API de Izipay
+          const response = await fetch(
+            'https://api.micuentaweb.pe/api-payment/V4/Charge/CreatePayment',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                // Autenticación Basic (usuario:contraseña en base64)
+                Authorization:
+                  'Basic ' + Buffer.from(`${IZIPAY_USER}:${IZIPAY_PASSWORD}`).toString('base64'),
+              },
+              body: JSON.stringify({
+                amount: total, // Izipay maneja este valor en centavos. Ej: 180 => S/1.80
+                currency: 'PEN',
+                orderId,
+                customer: {
+                  email,
+                },
+              }),
+            },
+          )
+
+          if (!response.ok) {
+            const errorText = await response.text()
+            console.error('Error de Izipay:', errorText)
+            return Response.json({ error: 'Error al generar formToken en Izipay' }, { status: 500 })
+          }
+
+          const data = await response.json()
+          // data.answer.formToken es lo que nos interesa
+          const formToken = data?.answer?.formToken
+
+          if (!formToken) {
+            console.error('No se encontró formToken en la respuesta de Izipay:', data)
+            return Response.json({ error: 'No se pudo obtener el formToken' }, { status: 500 })
+          }
+
+          // Devolvemos el token
+          return Response.json({ formToken }, { status: 200 })
+        } catch (error) {
+          console.error('Error en /izipay-token:', error)
+          return Response.json(
+            { error: 'Error interno del servidor al generar formToken' },
+            { status: 500 },
+          )
         }
       }),
     },
