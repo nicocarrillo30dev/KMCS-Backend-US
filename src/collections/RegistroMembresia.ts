@@ -53,7 +53,7 @@ export const RegistroDeMembresias: CollectionConfig = {
       },
     },
   ],
-  /*
+
   hooks: {
     beforeChange: [
       async ({ data, req, operation }) => {
@@ -103,5 +103,4 @@ export const RegistroDeMembresias: CollectionConfig = {
       },
     ],
   },
-  */
 }
