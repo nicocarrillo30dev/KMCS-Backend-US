@@ -544,7 +544,8 @@ export default buildConfig({
 
           // 3) Verificar la firma con la 4ª clave HMAC-SHA-256 (del panel Izipay)
           //    Ej: "testsha256key_5e3htNb..."
-          const hmacKey = process.env.IZIPAY_HMAC_KEY || 'TU_CLAVE_HMAC_AQUI'
+          const hmacKey =
+            process.env.IZIPAY_HMAC_KEY || 'k7UUT3ar8kC06yeXZk6KYyxp6GVD3Uw6yHffaJO7d2qZp'
 
           const computedHash = crypto
             .createHmac('sha256', hmacKey)
@@ -601,7 +602,9 @@ export default buildConfig({
 
           // La "2ª clave" se llama “Contraseña” en el panel Izipay
           // (key #2 en la sección "Claves de la API REST").
-          const passwordKey = process.env.IZIPAY_PASSWORD_KEY || 'TU_PASSWORD_2a_CLAVE'
+          const passwordKey =
+            process.env.IZIPAY_PASSWORD_KEY ||
+            'testpassword_Ha0g86Dd5BWsmAfYLKNztGz208husq08sqhFCI3CYOzBD'
 
           // Verificar la firma
           const computedHash = crypto
