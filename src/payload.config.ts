@@ -12,6 +12,8 @@ import { resendAdapter } from '@payloadcms/email-resend'
 import { withCors } from './utils/withCors'
 import { addDataAndFileToRequest } from '@payloadcms/next/utilities'
 
+import crypto from 'crypto'
+
 import { es } from '@payloadcms/translations/languages/es'
 
 import { CapturaDePagos } from './collections/CapturasPagos'
@@ -47,6 +49,16 @@ type UploadFile = {
   name: string
   size: number
   tempFilePath?: string
+}
+
+type PaymentSuccessFormData = {
+  'kr-answer'?: string
+  'kr-hash'?: string
+}
+
+type IpnBody = {
+  'kr-answer'?: string
+  'kr-hash'?: string
 }
 
 export default buildConfig({
@@ -432,6 +444,7 @@ export default buildConfig({
         }
       }),
     },
+    //izipay
     {
       path: '/izipay-token',
       method: 'post',
@@ -496,6 +509,124 @@ export default buildConfig({
             { error: 'Error interno del servidor al generar formToken' },
             { status: 500 },
           )
+        }
+      }),
+    },
+    {
+      path: '/payment-success',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          // 1) Leer los datos del body
+          //    Dependiendo de tu configuración, Payload CMS parsea x-www-form-urlencoded
+          //    o form-data. Asegúrate de tener la configuración de parseo adecuada.
+          // Aseguramos que req.body sea un PaymentSuccessFormData
+          const body = req.body as PaymentSuccessFormData | undefined
+
+          if (!body || !body['kr-answer']) {
+            return Response.json({ error: 'No llegó kr-answer' }, { status: 400 })
+          }
+
+          const krAnswerString = body['kr-answer']
+          const krHash = body['kr-hash']
+
+          if (!krAnswerString) {
+            return Response.json({ error: 'No llegó kr-answer' }, { status: 400 })
+          }
+
+          // 2) Convertir kr-answer a objeto JSON
+          let answer
+          try {
+            answer = JSON.parse(krAnswerString)
+          } catch (err) {
+            return Response.json({ error: 'kr-answer es inválido' }, { status: 400 })
+          }
+
+          // 3) Verificar la firma con la 4ª clave HMAC-SHA-256 (del panel Izipay)
+          //    Ej: "testsha256key_5e3htNb..."
+          const hmacKey = process.env.IZIPAY_HMAC_KEY || 'TU_CLAVE_HMAC_AQUI'
+
+          const computedHash = crypto
+            .createHmac('sha256', hmacKey)
+            .update(krAnswerString) // la cadena "json" en sí
+            .digest('hex')
+
+          if (!krHash || computedHash.toLowerCase() !== krHash.toLowerCase()) {
+            console.error('Hash no coincide. Respuesta no auténtica.')
+            return Response.json({ error: 'Hash mismatch' }, { status: 400 })
+          }
+
+          // 4) Revisar el estado del pago
+          if (answer.orderStatus === 'PAID') {
+            console.log('Pago exitoso. Detalles:', answer)
+            // Aquí actualiza tu base de datos, envía correos, etc.
+            return Response.json({ message: '¡Pago exitoso!', data: answer }, { status: 200 })
+          } else {
+            console.log('Pago NO completado. orderStatus:', answer.orderStatus)
+            return Response.json({ message: 'Pago no completado', data: answer }, { status: 200 })
+          }
+        } catch (err) {
+          console.error('Error en /payment-success:', err)
+          return Response.json({ error: 'Error interno al procesar el pago' }, { status: 500 })
+        }
+      }),
+    },
+    {
+      path: '/izipay-ipn',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          // 1) Castear el body a nuestro tipo
+          const body = req.body as IpnBody | undefined
+
+          // 2) Asegurarnos de que existe y tiene "kr-answer"
+          if (!body || !body['kr-answer']) {
+            return Response.json({ error: 'No llegó kr-answer' }, { status: 400 })
+          }
+
+          // 3) Extraer las propiedades
+          const krAnswerString = body['kr-answer']
+          const krHash = body['kr-hash']
+
+          if (!krAnswerString) {
+            return Response.json({ error: 'No llegó kr-answer' }, { status: 400 })
+          }
+
+          let answer
+          try {
+            answer = JSON.parse(krAnswerString)
+          } catch (err) {
+            return Response.json({ error: 'kr-answer inválido' }, { status: 400 })
+          }
+
+          // La "2ª clave" se llama “Contraseña” en el panel Izipay
+          // (key #2 en la sección "Claves de la API REST").
+          const passwordKey = process.env.IZIPAY_PASSWORD_KEY || 'TU_PASSWORD_2a_CLAVE'
+
+          // Verificar la firma
+          const computedHash = crypto
+            .createHmac('sha256', passwordKey)
+            .update(krAnswerString)
+            .digest('hex')
+
+          if (!krHash || computedHash.toLowerCase() !== krHash.toLowerCase()) {
+            console.error('Hash no coincide en IPN. Respuesta no auténtica.')
+            return Response.json({ error: 'Hash mismatch' }, { status: 400 })
+          }
+
+          // Revisar answer.orderStatus, etc.
+          if (answer.orderStatus === 'PAID') {
+            console.log('IPN: Pago completado con éxito. Detalles:', answer)
+            // Actualiza BD, etc.
+          } else {
+            console.log('IPN: Pago con estado =', answer.orderStatus)
+          }
+
+          // Izipay requiere que devuelvas 200 OK
+          return Response.json({ success: true }, { status: 200 })
+        } catch (err) {
+          console.error('Error en /izipay-ipn:', err)
+          return Response.json({ error: 'Error interno en IPN' }, { status: 500 })
         }
       }),
     },
