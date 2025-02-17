@@ -98,7 +98,7 @@ export default buildConfig({
     headers: ['Content-Type', 'Authorization'],
   },
   endpoints: [
-    //lemonsqueezy
+    //lemonsqueez
     {
       path: '/create-lemon-checkout',
       method: 'post',
