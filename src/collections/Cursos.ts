@@ -62,7 +62,7 @@ export const Cursos: CollectionConfig = {
   access: {
     read: () => true,
     create: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
-    update: () => true,
+    update: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
     delete: ({ req: { user } }) => Boolean(user && user.role === 'Admin'),
   },
 
