@@ -106,34 +106,31 @@ export default buildConfig({
         try {
           // 1) Cargar data que viene del front
           await addDataAndFileToRequest(req)
-
-          // Destructuramos también cartToken
           const { total, productName, userEmail, cartToken } = req.data as any
 
-          // Validaciones mínimas
           if (!total || total < 1) {
             return Response.json({ error: 'Total inválido' }, { status: 400 })
           }
 
-          // Si no vino cartToken del frontend, podrías crearlo al vuelo
-          if (!cartToken) {
-            // cartToken = uuidv4(); // si quisieras generarlo aquí
-          }
-
-          // 2) Configurar la API Key de Lemon
+          // 2) Configurar la API Key y store_id de Lemon Squeezy
           const LEMON_API_KEY = process.env.LEMON_API_KEY
           if (!LEMON_API_KEY) {
             return Response.json({ error: 'No hay API Key para Lemon Squeezy' }, { status: 500 })
           }
+          const LEMON_STORE_ID = process.env.LEMON_STORE_ID
+          if (!LEMON_STORE_ID) {
+            return Response.json({ error: 'No hay store_id configurado' }, { status: 500 })
+          }
 
-          // 3) Construir bodyData para Lemon Squeezy
+          // 3) Construir el payload (bodyData) de acuerdo a la especificación JSON:API
           const bodyData = {
             data: {
               type: 'checkouts',
               attributes: {
+                store_id: LEMON_STORE_ID,
                 prices: [
                   {
-                    amount: total * 100, // en centavos
+                    amount: total * 100, // total en centavos
                     currency: 'USD',
                     name: productName || 'Cursos Pastelería',
                   },
@@ -144,18 +141,21 @@ export default buildConfig({
                   customer_email: userEmail,
                 },
                 custom: {
-                  cartToken, // <-- ahora sí existe en el scope
+                  cartToken, // Debe estar definido (recibido desde el front o generado en el backend)
                 },
               },
             },
           }
 
-          // 4) Llamar a la API
+          // Opcional: loguea bodyData para depuración
+          console.log('bodyData enviado a Lemon Squeezy:', bodyData)
+
+          // 4) Llamar a la API de Lemon Squeezy
           const apiResp = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/vnd.api+json',
-              Accept: 'application/json',
+              Accept: 'application/vnd.api+json',
               Authorization: `Bearer ${LEMON_API_KEY}`,
             },
             body: JSON.stringify(bodyData),
@@ -163,6 +163,8 @@ export default buildConfig({
 
           if (!apiResp.ok) {
             console.error('Lemon Squeezy API error:', apiResp.status, apiResp.statusText)
+            const errorResponse = await apiResp.text()
+            console.error('Detalles del error:', errorResponse)
             return Response.json(
               { error: 'Error creando checkout en Lemon Squeezy' },
               { status: 500 },
@@ -179,7 +181,7 @@ export default buildConfig({
             )
           }
 
-          // 5) Retornar la url al frontend
+          // 5) Retornar la URL al frontend
           return Response.json({ checkoutUrl }, { status: 200 })
         } catch (error) {
           console.error('/create-lemon-checkout error:', error)
