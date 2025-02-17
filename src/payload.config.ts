@@ -98,6 +98,95 @@ export default buildConfig({
     headers: ['Content-Type', 'Authorization'],
   },
   endpoints: [
+    //lemonsqueezy
+    {
+      path: '/create-lemon-checkout',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          // 1) Cargar data que viene del front
+          await addDataAndFileToRequest(req)
+
+          // Destructuramos también cartToken
+          const { total, productName, userEmail, cartToken } = req.data as any
+
+          // Validaciones mínimas
+          if (!total || total < 1) {
+            return Response.json({ error: 'Total inválido' }, { status: 400 })
+          }
+
+          // Si no vino cartToken del frontend, podrías crearlo al vuelo
+          if (!cartToken) {
+            // cartToken = uuidv4(); // si quisieras generarlo aquí
+          }
+
+          // 2) Configurar la API Key de Lemon
+          const LEMON_API_KEY = process.env.LEMON_API_KEY
+          if (!LEMON_API_KEY) {
+            return Response.json({ error: 'No hay API Key para Lemon Squeezy' }, { status: 500 })
+          }
+
+          // 3) Construir bodyData para Lemon Squeezy
+          const bodyData = {
+            data: {
+              type: 'checkouts',
+              attributes: {
+                prices: [
+                  {
+                    amount: total * 100, // en centavos
+                    currency: 'USD',
+                    name: productName || 'Cursos Pastelería',
+                  },
+                ],
+                success_url: 'https://www.kathymonzon.com/thank-you-lemon',
+                cancel_url: 'https://www.kathymonzon.com/checkout',
+                checkout_data: {
+                  customer_email: userEmail,
+                },
+                custom: {
+                  cartToken, // <-- ahora sí existe en el scope
+                },
+              },
+            },
+          }
+
+          // 4) Llamar a la API
+          const apiResp = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/vnd.api+json',
+              Accept: 'application/json',
+              Authorization: `Bearer ${LEMON_API_KEY}`,
+            },
+            body: JSON.stringify(bodyData),
+          })
+
+          if (!apiResp.ok) {
+            console.error('Lemon Squeezy API error:', apiResp.status, apiResp.statusText)
+            return Response.json(
+              { error: 'Error creando checkout en Lemon Squeezy' },
+              { status: 500 },
+            )
+          }
+
+          const json = await apiResp.json()
+          const checkoutUrl = json?.data?.attributes?.url
+          if (!checkoutUrl) {
+            console.error('No se obtuvo checkoutUrl de Lemon Squeezy:', json)
+            return Response.json(
+              { error: 'No se pudo obtener el URL de checkout' },
+              { status: 500 },
+            )
+          }
+
+          // 5) Retornar la url al frontend
+          return Response.json({ checkoutUrl }, { status: 200 })
+        } catch (error) {
+          console.error('/create-lemon-checkout error:', error)
+          return Response.json({ error: 'Error interno al crear checkout' }, { status: 500 })
+        }
+      }),
+    },
     // ✅ DONE ✅
     {
       path: '/courses',
@@ -444,6 +533,7 @@ export default buildConfig({
         }
       }),
     },
+
     //izipay
     {
       path: '/izipay-token',
