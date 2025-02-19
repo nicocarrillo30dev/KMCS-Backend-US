@@ -353,7 +353,7 @@ export const Usuarios: CollectionConfig = {
         </tr>
         <tr>
             <td align="center">
-                <h1 style="font-size: 24px; margin: 20px 0px 0px 0px; font-weight: 500;">Hola Nicolás,</h1>
+                <h1 style="font-size: 24px; margin: 20px 0px 0px 0px; font-weight: 500;">Hola, reestablece tu contraseña</h1>
             </td>
         </tr>
         <tr>
