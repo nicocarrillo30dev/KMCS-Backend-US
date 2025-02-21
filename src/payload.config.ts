@@ -348,7 +348,8 @@ export default buildConfig({
         }
       }),
     },
-    // magic
+    // Dentro de payload.config.ts u otro archivo donde definas tus endpoints
+
     {
       path: '/validate-cart',
       method: 'post',
@@ -468,7 +469,7 @@ export default buildConfig({
                 localSelectedGroupHorario = foundGroup.horario
                 localSelectedGroupFechas = foundGroup.fechas
 
-                // // Ejemplo de validación de vacantes:
+                // Ejemplo de validación de vacantes:
                 // if (Number(foundGroup.vacantes) <= 0) {
                 //   console.log(`El grupo ${localSelectedGroupId} no tiene vacantes`);
                 //   return null;
@@ -496,6 +497,21 @@ export default buildConfig({
               }
             })
             .filter(Boolean) // Quitar nulos
+
+          // 2f. Lógica para la promoción 2x1:
+          // IDs de cursos en promoción (2x1)
+          const promotionIds = [14893, 43378, 14915, 39885]
+          // Filtramos los cursos virtuales que pertenecen a la promoción
+          const promoItems = validatedCart.filter(
+            (item: any) => item.type === 'curso virtual' && promotionIds.includes(item.id),
+          )
+          // Ordenamos de menor a mayor precio
+          const sortedPromo = [...promoItems].sort((a: any, b: any) => a.finalPrice - b.finalPrice)
+          const freeCount = Math.floor(sortedPromo.length / 2)
+          // Para los primeros freeCount cursos (los de menor precio), aplicamos el descuento 2x1: finalPrice a 0
+          for (let i = 0; i < freeCount; i++) {
+            sortedPromo[i]!.finalPrice = 0
+          }
 
           // 3. Guardar en memoria efímera
           const cartId = Math.random().toString(36).substring(2, 12)
