@@ -500,16 +500,19 @@ export default buildConfig({
 
           // 2f. Lógica para la promoción 2x1:
           // IDs de cursos en promoción (2x1)
-          const promotionIds = [14893, 43378, 14915, 39885]
+          const promotionIdsArray = [14893, 43378, 14915, 39885]
           // Filtramos los cursos virtuales que pertenecen a la promoción
           const promoItems = validatedCart.filter(
-            (item: any) => item.type === 'curso virtual' && promotionIds.includes(item.id),
+            (item: any) => item.type === 'curso virtual' && promotionIdsArray.includes(item.id),
           )
           // Ordenamos de menor a mayor precio
           const sortedPromo = [...promoItems].sort((a: any, b: any) => a.finalPrice - b.finalPrice)
           const freeCount = Math.floor(sortedPromo.length / 2)
-          // Para los primeros freeCount cursos (los de menor precio), aplicamos el descuento 2x1: finalPrice a 0
+          // Para los primeros freeCount cursos (los de menor precio), aplicamos el descuento 2x1:
+          // Guardamos el monto descontado en un nuevo campo y establecemos finalPrice a 0.
           for (let i = 0; i < freeCount; i++) {
+            // Aseguramos que el objeto no sea null con el operador de aserción (si es necesario)
+            sortedPromo[i]!.discountedPrice = sortedPromo[i]!.finalPrice
             sortedPromo[i]!.finalPrice = 0
           }
 
