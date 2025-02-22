@@ -352,7 +352,7 @@ export default buildConfig({
     {
       path: '/validate-cart',
       method: 'post',
-      handler: withCors(async (req) => {
+      handler: withCors(async (req: any) => {
         try {
           await addDataAndFileToRequest(req)
           const { productArray, userIdentifier } = req.data as any
@@ -364,7 +364,7 @@ export default buildConfig({
             return Response.json({ error: 'No se enviaron productos' }, { status: 400 })
           }
 
-          // 1. Fetch colecciones
+          // 1. Fetch de colecciones
           const resCursos = await fetch(`${req.payload.config.serverURL}/api/cursos?limit=150`)
           if (!resCursos.ok) {
             return Response.json({ error: 'Error interno al obtener cursos' }, { status: 500 })
@@ -393,8 +393,8 @@ export default buildConfig({
 
           // 2. Recorremos el "productArray" para validar
           const validatedCart = productArray
-            .map((clientItem) => {
-              // Desestructuramos con "let" y renombramos para poder reasignar
+            .map((clientItem: any) => {
+              // Desestructuramos
               const {
                 payloadId,
                 type,
@@ -402,15 +402,17 @@ export default buildConfig({
                 selectedGroupId: localSelectedGroupId,
               } = clientItem
 
-              // 2) Desestructurar con LET las que SÍ se reasignan
               let {
                 selectedGroupHorario: localSelectedGroupHorario,
                 selectedGroupFechas: localSelectedGroupFechas,
               } = clientItem
 
-              let foundDoc = null
+              if (!payloadId || !type) {
+                return null // Faltan datos esenciales
+              }
 
-              // 2a. Identificamos cuál colección buscar
+              // Identificamos cuál colección usar
+              let foundDoc: any = null
               if (type === 'curso virtual') {
                 foundDoc = courses.find((c: any) => c.id === payloadId)
               } else if (type === 'taller presencial') {
@@ -427,13 +429,13 @@ export default buildConfig({
                 return null
               }
 
-              // 2b. Precios
+              // Precios
               let originalPrice = 0
-              let discountedPrice = null
+              let discountedPrice: number | null = null
 
               if (type === 'curso virtual') {
                 originalPrice = foundDoc.precio || 0
-                discountedPrice = foundDoc.precioConDescuento || null
+                discountedPrice = foundDoc.precioConDescuento ?? null
               } else if (type === 'taller presencial') {
                 originalPrice = foundDoc.precio || 0
               } else if (type === 'membresía') {
@@ -443,15 +445,15 @@ export default buildConfig({
               const membershipDiscountPrice = null
               const finalPrice = discountedPrice ?? originalPrice
 
-              // 2c. Imagen final
-              let finalImage = null
+              // Imagen final
+              let finalImage: string | null = null
               if (foundDoc.coverImage && foundDoc.coverImage.SupaURL) {
                 finalImage = foundDoc.coverImage.SupaURL
               } else {
                 finalImage = frontImage || null
               }
 
-              // 2d. Validamos taller presencial con el grupo seleccionado
+              // Validar taller presencial
               if (type === 'taller presencial' && localSelectedGroupId) {
                 const foundGroup = foundDoc.gruposDeFechas?.find(
                   (g: any) => g.id === localSelectedGroupId,
@@ -464,20 +466,13 @@ export default buildConfig({
                   return null
                 }
 
-                // Sobrescribimos con la data real del backend
+                // Sobrescribimos con data real del backend
                 localSelectedGroupHorario = foundGroup.horario
                 localSelectedGroupFechas = foundGroup.fechas
-
-                // Ejemplo de validación de vacantes:
-                // if (Number(foundGroup.vacantes) <= 0) {
-                //   console.log(`El grupo ${localSelectedGroupId} no tiene vacantes`);
-                //   return null;
-                // }
               }
 
-              // 2e. Construimos objeto final validado
+              // Retornamos el objeto validado
               return {
-                // ID del documento en la BD
                 id: foundDoc.id,
                 type,
                 title: foundDoc.title || foundDoc.nombre || 'Sin título',
@@ -489,36 +484,40 @@ export default buildConfig({
                 membershipDiscountPrice,
                 finalPrice,
 
-                // Info extra (taller presencial, etc.)
+                // Info extra
                 selectedGroupId: localSelectedGroupId,
                 selectedGroupHorario: localSelectedGroupHorario,
                 selectedGroupFechas: localSelectedGroupFechas,
               }
             })
-            .filter(Boolean) // Quitar nulos
+            .filter(Boolean) // Quitamos nulos
 
-          // 2f. Lógica para la promoción 2x1:
-          // IDs de cursos en promoción (2x1)
-          // Dentro de tu endpoint /validate-cart, después de armar validatedCart:
-
-          // 2f. Lógica para la promoción 2x1:
+          // 2f. Lógica para la promoción 2x1 (IDs de Buttercream incluidos aquí):
           const promotionIdsArray = [14893, 43378, 14915, 39885]
+
           // Filtramos los cursos virtuales que pertenecen a la promoción
           const promoItems = validatedCart.filter(
-            (item: any) => item.type === 'curso virtual' && promotionIdsArray.includes(item.id),
+            (item: any) =>
+              item.type === 'curso virtual' && promotionIdsArray.includes(Number(item.id)),
           )
-          // Ordenamos de menor a mayor precio
+
+          // Ordenar de menor a mayor finalPrice
           const sortedPromo = [...promoItems].sort((a: any, b: any) => a.finalPrice - b.finalPrice)
+
+          // Por cada par, uno gratis
           const freeCount = Math.floor(sortedPromo.length / 2)
-          // Para los primeros freeCount cursos (los de menor precio), aplicamos el descuento 2x1:
+
+          // A los 'freeCount' más baratos, asignar 0
           for (let i = 0; i < freeCount; i++) {
-            sortedPromo[i]!.discountedPrice = 0 // Asigna 0 a discountedPrice
-            sortedPromo[i]!.finalPrice = 0
+            if (sortedPromo[i]) {
+              sortedPromo[i]!.discountedPrice = 0
+              sortedPromo[i]!.finalPrice = 0
+            }
           }
 
-          // 3. Guardar en memoria efímera
+          // 3. Guardar en memoria efímera (o donde manejes tu carrito)
           const cartId = Math.random().toString(36).substring(2, 12)
-          ephemeralCartsStore[cartId] = validatedCart
+          ephemeralCartsStore[cartId] = validatedCart // asumes ephemeralCartsStore ya está declarado
 
           // 4. Responder
           return new Response(JSON.stringify({ success: true, validatedCart }), {
@@ -528,7 +527,7 @@ export default buildConfig({
               'Set-Cookie': `cartId=${cartId}; Path=/; HttpOnly; Secure; SameSite=None;`,
             },
           })
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error en /validate-cart:', error)
           return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
         }
