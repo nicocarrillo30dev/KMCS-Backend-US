@@ -402,7 +402,6 @@ export default buildConfig({
                 selectedGroupId: localSelectedGroupId,
               } = clientItem
 
-              // 2) Desestructurar con LET las que SÍ se reasignan
               let {
                 selectedGroupHorario: localSelectedGroupHorario,
                 selectedGroupFechas: localSelectedGroupFechas,
@@ -467,12 +466,6 @@ export default buildConfig({
                 // Sobrescribimos con la data real del backend
                 localSelectedGroupHorario = foundGroup.horario
                 localSelectedGroupFechas = foundGroup.fechas
-
-                // // Ejemplo de validación de vacantes:
-                // if (Number(foundGroup.vacantes) <= 0) {
-                //   console.log(`El grupo ${localSelectedGroupId} no tiene vacantes`);
-                //   return null;
-                // }
               }
 
               // 2e. Construimos objeto final validado
@@ -496,6 +489,35 @@ export default buildConfig({
               }
             })
             .filter(Boolean) // Quitar nulos
+
+          // ================================================
+          // AÑADIMOS LA LÓGICA PARA LA PROMO 2x1 (Buttercream)
+          // ================================================
+          const BUTTERCREAM_IDS = [14893, 43378, 14915, 39885]
+
+          // 1) Filtramos los cursos que apliquen a la promo (BUTTERCREAM_IDS)
+          const buttercreamItems = validatedCart.filter((item: any) =>
+            BUTTERCREAM_IDS.includes(item.id),
+          )
+
+          // 2) Ordenamos por finalPrice de menor a mayor
+          buttercreamItems.sort((a: any, b: any) => a.finalPrice - b.finalPrice)
+
+          // 3) Por cada par, uno es gratis (el más barato)
+          const pairsCount = Math.floor(buttercreamItems.length / 2)
+          const discountedItems = buttercreamItems.slice(0, pairsCount)
+
+          // 4) Asignamos originalPrice y finalPrice = 0 a los que salen gratis
+          discountedItems.forEach((discountedItem: any) => {
+            const idx = validatedCart.findIndex((ic: any) => ic.id === discountedItem.id)
+            if (idx !== -1) {
+              validatedCart[idx]!.originalPrice = 0
+              validatedCart[idx]!.finalPrice = 0
+            }
+          })
+          // ================================================
+          // FIN DE LA LÓGICA PROMO 2x1
+          // ================================================
 
           // 3. Guardar en memoria efímera
           const cartId = Math.random().toString(36).substring(2, 12)
