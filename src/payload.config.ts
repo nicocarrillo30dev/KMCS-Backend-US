@@ -492,7 +492,7 @@ export default buildConfig({
             })
             .filter(Boolean) // Quitamos nulos
 
-          // 2f. Lógica para la promoción 2x1 (IDs de Buttercream incluidos aquí):
+          // 2f. Lógica para la promoción 2x1 (IDs de Buttercream aquí)
           const promotionIdsArray = [14893, 43378, 14915, 39885]
 
           // Filtramos los cursos virtuales que pertenecen a la promoción
@@ -510,6 +510,8 @@ export default buildConfig({
           // A los 'freeCount' más baratos, asignar 0
           for (let i = 0; i < freeCount; i++) {
             if (sortedPromo[i]) {
+              // Se cambian TODOS los precios a 0
+              sortedPromo[i]!.originalPrice = 0
               sortedPromo[i]!.discountedPrice = 0
               sortedPromo[i]!.finalPrice = 0
             }
@@ -517,7 +519,7 @@ export default buildConfig({
 
           // 3. Guardar en memoria efímera (o donde manejes tu carrito)
           const cartId = Math.random().toString(36).substring(2, 12)
-          ephemeralCartsStore[cartId] = validatedCart // asumes ephemeralCartsStore ya está declarado
+          ephemeralCartsStore[cartId] = validatedCart
 
           // 4. Responder
           return new Response(JSON.stringify({ success: true, validatedCart }), {
