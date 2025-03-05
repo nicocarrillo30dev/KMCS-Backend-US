@@ -60,7 +60,7 @@ export const RegistroDeMembresias: CollectionConfig = {
         if (operation === 'create') {
           const { usuario } = data
 
-          // Buscar la membresía activa de ese usuario
+          // Buscar la membresía activa de ese usuari0
           const activeMembership = await req.payload.find({
             collection: 'registro-de-membresias',
             where: {
