@@ -18,7 +18,9 @@ export interface Config {
     enrollment: Enrollment;
     fotosPreguntas: FotosPregunta;
     fotosUsuarios: FotosUsuario;
+    ingredientesmuffins: Ingredientesmuffin;
     imagenes: Imagene;
+    recetasmuffins: Recetasmuffin;
     'imagenes-reviews': ImagenesReview;
     membresias: Membresia;
     pedidos: Pedido;
@@ -41,7 +43,9 @@ export interface Config {
     enrollment: EnrollmentSelect<false> | EnrollmentSelect<true>;
     fotosPreguntas: FotosPreguntasSelect<false> | FotosPreguntasSelect<true>;
     fotosUsuarios: FotosUsuariosSelect<false> | FotosUsuariosSelect<true>;
+    ingredientesmuffins: IngredientesmuffinsSelect<false> | IngredientesmuffinsSelect<true>;
     imagenes: ImagenesSelect<false> | ImagenesSelect<true>;
+    recetasmuffins: RecetasmuffinsSelect<false> | RecetasmuffinsSelect<true>;
     'imagenes-reviews': ImagenesReviewsSelect<false> | ImagenesReviewsSelect<true>;
     membresias: MembresiasSelect<false> | MembresiasSelect<true>;
     pedidos: PedidosSelect<false> | PedidosSelect<true>;
@@ -435,6 +439,40 @@ export interface FotosPregunta {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ingredientesmuffins".
+ */
+export interface Ingredientesmuffin {
+  id: number;
+  nombre: string;
+  precio: number;
+  cantidadBase: number;
+  unidad: 'gramos' | 'mililitros';
+  usuario: number | Usuario;
+  costoPorGramo?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recetasmuffins".
+ */
+export interface Recetasmuffin {
+  id: number;
+  nombre: string;
+  usuario: number | Usuario;
+  ingredientesUsados?:
+    | {
+        ingrediente: number | Ingredientesmuffin;
+        cantidadNecesaria: number;
+        costoCalculado?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "imagenes-reviews".
  */
 export interface ImagenesReview {
@@ -734,8 +772,16 @@ export interface PayloadLockedDocument {
         value: number | FotosUsuario;
       } | null)
     | ({
+        relationTo: 'ingredientesmuffins';
+        value: number | Ingredientesmuffin;
+      } | null)
+    | ({
         relationTo: 'imagenes';
         value: number | Imagene;
+      } | null)
+    | ({
+        relationTo: 'recetasmuffins';
+        value: number | Recetasmuffin;
       } | null)
     | ({
         relationTo: 'imagenes-reviews';
@@ -982,6 +1028,20 @@ export interface FotosUsuariosSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ingredientesmuffins_select".
+ */
+export interface IngredientesmuffinsSelect<T extends boolean = true> {
+  nombre?: T;
+  precio?: T;
+  cantidadBase?: T;
+  unidad?: T;
+  usuario?: T;
+  costoPorGramo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "imagenes_select".
  */
 export interface ImagenesSelect<T extends boolean = true> {
@@ -999,6 +1059,24 @@ export interface ImagenesSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recetasmuffins_select".
+ */
+export interface RecetasmuffinsSelect<T extends boolean = true> {
+  nombre?: T;
+  usuario?: T;
+  ingredientesUsados?:
+    | T
+    | {
+        ingrediente?: T;
+        cantidadNecesaria?: T;
+        costoCalculado?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

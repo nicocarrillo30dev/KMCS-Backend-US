@@ -23,12 +23,14 @@ import { Cupones } from './collections/Cupones'
 import { Enrollment } from './collections/Enrollment'
 import { FotosPreguntas } from './collections/FotosPreguntas'
 import { FotosUsuarios } from './collections/FotosUsuarios'
+import { IngredientesMuffins } from './collections/IngredientesMuffins'
 import { Imagenes } from './collections/Imagenes'
 import { ImagenesReviews } from './collections/ImagenesReviews'
 import { Membresias } from './collections/Membership'
 import { pedidos } from './collections/Orders'
 import PreguntasRespuestas from './collections/PreguntasAlumnos'
 import { RegistroDeMembresias } from './collections/RegistroMembresia'
+import { RecetasMuffins } from './collections/RecetasMuffins'
 import ReviewsCursosVirtuales from './collections/ReseñasCursosVirtuales'
 import ReviewsTalleresPresenciales from './collections/ReseñasTalleresPresenciales'
 import { TalleresPresenciales } from './collections/TalleresPresenciales'
@@ -1901,7 +1903,9 @@ export default buildConfig({
     Enrollment,
     FotosPreguntas,
     FotosUsuarios,
+    IngredientesMuffins,
     Imagenes,
+    RecetasMuffins,
     ImagenesReviews,
     Membresias,
     pedidos,
