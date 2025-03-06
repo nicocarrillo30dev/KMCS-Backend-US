@@ -1893,6 +1893,236 @@ export default buildConfig({
         }
       }),
     },
+
+    {
+      path: '/my-recipes',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          const userId = req.user?.id
+          if (!userId) {
+            return new Response('No autorizado (no hay sesión).', { status: 401 })
+          }
+
+          // Filtramos recetas con `usuario: userId`
+          const result = await req.payload.find({
+            collection: 'recetasmuffins',
+            where: {
+              usuario: { equals: userId },
+            },
+            pagination: false,
+            depth: 1, // ajusta según necesites
+          })
+
+          return new Response(JSON.stringify(result), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        } catch (error) {
+          console.error('Error en GET /my-recipes:', error)
+          return new Response(JSON.stringify({ error: 'Error interno al obtener recetas.' }), {
+            status: 500,
+          })
+        }
+      }),
+    },
+
+    // -------------------------------------------------------------------------
+    // 2) GET /my-recipes/:id => Obtener 1 receta (solo si es de este usuario)
+    // -------------------------------------------------------------------------
+    {
+      path: '/my-recipes/:id',
+      method: 'get',
+      handler: withCors(async (req) => {
+        try {
+          const userId = req.user?.id
+          if (!userId) {
+            return new Response('No autorizado.', { status: 401 })
+          }
+
+          // Tomamos el :id con cast a `any` para evitar error TS (req.params)
+          const recetaId = (req as any).params?.id
+          if (!recetaId) {
+            return new Response('Falta el param :id en la URL.', { status: 400 })
+          }
+
+          const recipeDoc = await req.payload.findByID({
+            collection: 'recetasmuffins',
+            id: recetaId,
+            depth: 1,
+          })
+
+          if (!recipeDoc) {
+            return new Response('Receta no encontrada.', { status: 404 })
+          }
+
+          // Verificar que la receta pertenezca al user logueado
+          if (recipeDoc.usuario !== userId) {
+            return new Response('No autorizado (receta no tuya).', { status: 403 })
+          }
+
+          return new Response(JSON.stringify(recipeDoc), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        } catch (error) {
+          console.error('Error en GET /my-recipes/:id:', error)
+          return new Response(JSON.stringify({ error: 'Error interno.' }), { status: 500 })
+        }
+      }),
+    },
+
+    // -------------------------------------------------------------------------
+    // 3) POST /my-recipes => Crear nueva receta (usuario logueado)
+    // -------------------------------------------------------------------------
+    {
+      path: '/my-recipes',
+      method: 'post',
+      handler: withCors(async (req) => {
+        try {
+          // parsear el body (solo si esperas multipart, etc.)
+          await addDataAndFileToRequest(req)
+
+          const userId = req.user?.id
+          if (!userId) {
+            return new Response('No autorizado.', { status: 401 })
+          }
+
+          const { nombre, ingredientesUsados } = req.data as any
+          if (!nombre || typeof nombre !== 'string') {
+            return new Response('Falta "nombre" o es inválido.', { status: 400 })
+          }
+
+          // Crear doc
+          const created = await req.payload.create({
+            collection: 'recetasmuffins',
+            data: {
+              nombre,
+              usuario: userId,
+              ingredientesUsados: ingredientesUsados ?? [],
+            },
+          })
+
+          return new Response(JSON.stringify(created), {
+            status: 201,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        } catch (error) {
+          console.error('Error en POST /my-recipes:', error)
+          return new Response(JSON.stringify({ error: 'Error interno al crear receta.' }), {
+            status: 500,
+          })
+        }
+      }),
+    },
+
+    // -------------------------------------------------------------------------
+    // 4) PATCH /my-recipes/:id => Actualizar receta (solo si user es dueño)
+    // -------------------------------------------------------------------------
+    {
+      path: '/my-recipes/:id',
+      method: 'patch',
+      handler: withCors(async (req) => {
+        try {
+          await addDataAndFileToRequest(req)
+
+          const userId = req.user?.id
+          if (!userId) {
+            return new Response('No autorizado.', { status: 401 })
+          }
+
+          const recetaId = (req as any).params?.id
+          if (!recetaId) {
+            return new Response('Falta :id en la URL.', { status: 400 })
+          }
+
+          // Primero, buscar la receta para chequear que sea del user
+          const recipeDoc = await req.payload.findByID({
+            collection: 'recetasmuffins',
+            id: recetaId,
+            depth: 0,
+          })
+          if (!recipeDoc) {
+            return new Response('Receta no encontrada.', { status: 404 })
+          }
+          if (recipeDoc.usuario !== userId) {
+            return new Response('No autorizado (receta no tuya).', { status: 403 })
+          }
+
+          // Campos a actualizar
+          const { nombre, ingredientesUsados } = req.data as any
+
+          const updated = await req.payload.update({
+            collection: 'recetasmuffins',
+            id: recetaId,
+            data: {
+              ...(typeof nombre === 'string' && { nombre }),
+              ...(typeof ingredientesUsados !== 'undefined' && { ingredientesUsados }),
+            },
+          })
+
+          return new Response(JSON.stringify(updated), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        } catch (error) {
+          console.error('Error en PATCH /my-recipes/:id:', error)
+          return new Response(JSON.stringify({ error: 'Error interno al actualizar receta.' }), {
+            status: 500,
+          })
+        }
+      }),
+    },
+
+    // -------------------------------------------------------------------------
+    // 5) DELETE /my-recipes/:id => Borrar una receta (solo si user es dueño)
+    // -------------------------------------------------------------------------
+    {
+      path: '/my-recipes/:id',
+      method: 'delete',
+      handler: withCors(async (req) => {
+        try {
+          const userId = req.user?.id
+          if (!userId) {
+            return new Response('No autorizado (no hay sesión).', { status: 401 })
+          }
+
+          const recipeId = (req as any).params?.id
+          if (!recipeId) {
+            return new Response('Falta el param :id en la URL.', { status: 400 })
+          }
+
+          // Buscamos la receta para confirmar que exista y sea de este user
+          const recipeDoc = await req.payload.findByID({
+            collection: 'recetasmuffins',
+            id: recipeId,
+            depth: 0,
+          })
+          if (!recipeDoc) {
+            return new Response('Receta no encontrada.', { status: 404 })
+          }
+          if (recipeDoc.usuario !== userId) {
+            return new Response('No autorizado (receta no te pertenece).', { status: 403 })
+          }
+
+          // Eliminar
+          await req.payload.delete({
+            collection: 'recetasmuffins',
+            id: recipeId,
+          })
+
+          return new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        } catch (error) {
+          console.error('Error en DELETE /my-recipes/:id:', error)
+          return new Response(JSON.stringify({ error: 'Error interno al eliminar receta' }), {
+            status: 500,
+          })
+        }
+      }),
+    },
   ],
 
   collections: [
