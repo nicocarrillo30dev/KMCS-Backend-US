@@ -472,18 +472,15 @@ export default buildConfig({
 
               // 2e. Construimos objeto final validado
               return {
-                // ID del documento en la BD
                 id: foundDoc.id,
                 type,
                 title: foundDoc.title || foundDoc.nombre || 'Sin título',
                 coverImage: finalImage,
-
                 // Precios
                 originalPrice,
                 discountedPrice,
                 membershipDiscountPrice,
                 finalPrice,
-
                 // Info extra (taller presencial, etc.)
                 selectedGroupId: localSelectedGroupId,
                 selectedGroupHorario: localSelectedGroupHorario,
@@ -492,36 +489,69 @@ export default buildConfig({
             })
             .filter(Boolean) // Quitar nulos
 
+          // === Lógica de promoción para curso "Galletas para Emprender" gratis ===
+          // Si el total del carrito, sin contar el curso promocional (payloadId 111),
+          // es mayor o igual a 98 soles, se pone el precio del curso "Galletas para Emprender" a 0.
+          const PROMO_THRESHOLD = 98
+          const freeCoursePayloadId = 111
+
+          // Filtramos nulos/undefined, validamos que sea un objeto con payloadId, y excluimos el curso promo
+          const totalWithoutPromo = validatedCart
+            .filter(
+              (item: any) =>
+                item &&
+                typeof item === 'object' &&
+                'payloadId' in item &&
+                item.payloadId !== freeCoursePayloadId,
+            )
+            .reduce((acc: number, item: any) => acc + Number(item.finalPrice ?? 0), 0)
+
+          if (totalWithoutPromo >= PROMO_THRESHOLD) {
+            validatedCart.forEach((item: any) => {
+              // Verificamos que item sea objeto y contenga payloadId
+              if (
+                item &&
+                typeof item === 'object' &&
+                'payloadId' in item &&
+                item.payloadId === freeCoursePayloadId
+              ) {
+                item.originalPrice = 0
+                item.finalPrice = 0
+              }
+            })
+          }
+          // === Fin de la lógica de promoción para curso gratis ===
+
           /* 
-      // ================================================
-      // AÑADIMOS LA LÓGICA PARA LA PROMO 2x1 (Buttercream)
-      // ================================================
-      const BUTTERCREAM_IDS = [14893, 43378, 14915, 39885]
-
-      // 1) Filtramos los cursos que apliquen a la promo (BUTTERCREAM_IDS)
-      const buttercreamItems = validatedCart.filter((item: any) =>
-        BUTTERCREAM_IDS.includes(item.id),
-      )
-
-      // 2) Ordenamos por finalPrice de menor a mayor
-      buttercreamItems.sort((a: any, b: any) => a.finalPrice - b.finalPrice)
-
-      // 3) Por cada par, uno es gratis (el más barato)
-      const pairsCount = Math.floor(buttercreamItems.length / 2)
-      const discountedItems = buttercreamItems.slice(0, pairsCount)
-
-      // 4) Asignamos originalPrice y finalPrice = 0 a los que salen gratis
-      discountedItems.forEach((discountedItem: any) => {
-        const idx = validatedCart.findIndex((ic: any) => ic.id === discountedItem.id)
-        if (idx !== -1) {
-          validatedCart[idx]!.originalPrice = 0
-          validatedCart[idx]!.finalPrice = 0
-        }
-      })
-      // ================================================
-      // FIN DE LA LÓGICA PROMO 2x1
-      // ================================================
-        */
+          // ================================================
+          // AÑADIMOS LA LÓGICA PARA LA PROMO 2x1 (Buttercream)
+          // ================================================
+          const BUTTERCREAM_IDS = [14893, 43378, 14915, 39885]
+    
+          // 1) Filtramos los cursos que apliquen a la promo (BUTTERCREAM_IDS)
+          const buttercreamItems = validatedCart.filter((item: any) =>
+            BUTTERCREAM_IDS.includes(item.id),
+          )
+    
+          // 2) Ordenamos por finalPrice de menor a mayor
+          buttercreamItems.sort((a: any, b: any) => a.finalPrice - b.finalPrice)
+    
+          // 3) Por cada par, uno es gratis (el más barato)
+          const pairsCount = Math.floor(buttercreamItems.length / 2)
+          const discountedItems = buttercreamItems.slice(0, pairsCount)
+    
+          // 4) Asignamos originalPrice y finalPrice = 0 a los que salen gratis
+          discountedItems.forEach((discountedItem: any) => {
+            const idx = validatedCart.findIndex((ic: any) => ic.id === discountedItem.id)
+            if (idx !== -1) {
+              validatedCart[idx]!.originalPrice = 0
+              validatedCart[idx]!.finalPrice = 0
+            }
+          })
+          // ================================================
+          // FIN DE LA LÓGICA PROMO 2x1
+          // ================================================
+          */
 
           // 3. Guardar en memoria efímera
           const cartId = Math.random().toString(36).substring(2, 12)
