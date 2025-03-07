@@ -493,28 +493,21 @@ export default buildConfig({
           // Si el total del carrito, sin contar el curso promocional (payloadId 111),
           // es mayor o igual a 98 soles, se pone el precio del curso "Galletas para Emprender" a 0.
           const PROMO_THRESHOLD = 98
-          const freeCoursePayloadId = 111
+          const freeCourseDocId = 111
 
-          // Filtramos nulos/undefined, validamos que sea un objeto con payloadId, y excluimos el curso promo
+          // Filtramos nulos/undefined, validamos que sea un objeto con la propiedad "id"
+          // y excluimos el curso promo (id=111)
           const totalWithoutPromo = validatedCart
             .filter(
               (item: any) =>
-                item &&
-                typeof item === 'object' &&
-                'payloadId' in item &&
-                item.payloadId !== freeCoursePayloadId,
+                item && typeof item === 'object' && 'id' in item && item.id !== freeCourseDocId,
             )
             .reduce((acc: number, item: any) => acc + Number(item.finalPrice ?? 0), 0)
 
           if (totalWithoutPromo >= PROMO_THRESHOLD) {
             validatedCart.forEach((item: any) => {
-              // Verificamos que item sea objeto y contenga payloadId
-              if (
-                item &&
-                typeof item === 'object' &&
-                'payloadId' in item &&
-                item.payloadId === freeCoursePayloadId
-              ) {
+              // Verificamos que item sea un objeto con la propiedad "id"
+              if (item && typeof item === 'object' && 'id' in item && item.id === freeCourseDocId) {
                 item.originalPrice = 0
                 item.finalPrice = 0
               }
