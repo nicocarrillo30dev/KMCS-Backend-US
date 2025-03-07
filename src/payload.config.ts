@@ -509,6 +509,7 @@ export default buildConfig({
               // Verificamos que item sea un objeto con la propiedad "id"
               if (item && typeof item === 'object' && 'id' in item && item.id === freeCourseDocId) {
                 item.originalPrice = 0
+                item.discountedPrice = 0 // Se fuerza el discount price a 0 también
                 item.finalPrice = 0
               }
             })
