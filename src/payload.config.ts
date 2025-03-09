@@ -489,6 +489,7 @@ export default buildConfig({
             })
             .filter(Boolean) // Quitar nulos
 
+          /*
           // === Lógica de promoción para curso "Galletas para Emprender" gratis ===
           // Si el total del carrito, sin contar el curso promocional (payloadId 111),
           // es mayor o igual a 98 soles, se pone el precio del curso "Galletas para Emprender" a 0.
@@ -515,6 +516,7 @@ export default buildConfig({
             })
           }
           // === Fin de la lógica de promoción para curso gratis ===
+          */
 
           /* 
           // ================================================
